@@ -264,7 +264,7 @@ void CameraV4L2::Main()
     pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
     // Grab the next frame (blocking)
-    this->GrabFrame();
+    rc = this->GrabFrame();
 
     pthread_setcancelstate(oldstate, NULL);
 

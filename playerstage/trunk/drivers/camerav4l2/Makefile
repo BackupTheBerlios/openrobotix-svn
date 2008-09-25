@@ -2,6 +2,7 @@
 LIBTOOL = libtool
 INSTALL= install -c
 CFLAGS = `pkg-config --cflags playercore` `pkg-config --cflags libv4l2`
+LDFLAGS = `pkg-config --libs libv4l2` `pkg-config --libs libv4lconvert`
 VERSION = 2:1:1
 DESTDIR =
 prefix = /usr
@@ -14,7 +15,7 @@ all: libcamerav4l2.la
 	$(LIBTOOL) --mode=compile $(CXX) -c $(CFLAGS) $<
 
 libcamerav4l2.la: camerav4l2.lo
-	$(LIBTOOL) --mode=link $(CXX) -rpath $(libdir) -module \
+	$(LIBTOOL) --mode=link $(CXX) $(LDFLAGS) -rpath $(libdir) -module \
 	-export-dynamic -version-number $(VERSION) $^ -o $@
 
 install: install-lib install-cfg
