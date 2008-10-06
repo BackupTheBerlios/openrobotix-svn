@@ -164,7 +164,6 @@ Driver* CameraV4L2_Init(ConfigFile* cf, int section)
   return reinterpret_cast<Driver *>(new CameraV4L2(cf, section));
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Driver registration function
 void CameraV4L2_Register(DriverTable* table)
 {
@@ -193,7 +192,6 @@ CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
   this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 10000000);
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
 int CameraV4L2::Setup()
 {
@@ -213,7 +211,6 @@ int CameraV4L2::Setup()
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Shutdown the device (called by server thread).
 int CameraV4L2::Shutdown()
 {
@@ -227,7 +224,6 @@ int CameraV4L2::Shutdown()
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Process an incoming message
 int CameraV4L2::ProcessMessage(QueuePointer &resp_queue,
                                player_msghdr * hdr,
@@ -239,9 +235,8 @@ int CameraV4L2::ProcessMessage(QueuePointer &resp_queue,
   return -1;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Main function for device thread
-void CameraV4L2::Main() 
+void CameraV4L2::Main()
 {
   int oldstate;
   struct timespec tspec;
@@ -279,7 +274,6 @@ void CameraV4L2::Main()
   }
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Initialization of the device
 int CameraV4L2::InitDevice()
 {
@@ -391,7 +385,6 @@ int CameraV4L2::InitDevice()
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Store an image frame into the 'frame' buffer
 int CameraV4L2::GrabFrame()
 {
@@ -402,14 +395,16 @@ int CameraV4L2::GrabFrame()
   this->timestamp = time.tv_sec + time.tv_usec * 1.e-6;
 
   assert(!(this->data));
-  this->data = reinterpret_cast<player_camera_data_t *>(malloc(sizeof(player_camera_data_t)));
+  this->data = reinterpret_cast<player_camera_data_t *>
+    (malloc(sizeof(player_camera_data_t)));
   assert(this->data);
 
   this->data->bpp = 24;
   this->data->format = PLAYER_CAMERA_FORMAT_RGB888;
   this->data->compression = PLAYER_CAMERA_COMPRESS_RAW;
   this->data->image_count = this->width * this->height * 3;
-  this->data->image = reinterpret_cast<uint8_t *>(malloc(this->data->image_count));
+  this->data->image = reinterpret_cast<uint8_t *>
+    (malloc(this->data->image_count));
   assert(this->data->image);
   this->data->width = this->width;
   this->data->height = this->height;
@@ -426,7 +421,6 @@ int CameraV4L2::GrabFrame()
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Update the device data (the data going back to the client).
 void CameraV4L2::RefreshData()
 {
@@ -451,7 +445,7 @@ void CameraV4L2::RefreshData()
   return;
 }
 
-////////////////////////////////////////////////////////////////////////////////
+
 // Set Framerate
 int CameraV4L2::SetFramerate(int fps)
 {
@@ -483,7 +477,6 @@ int CameraV4L2::SetFramerate(int fps)
   return 0;
 }
 
-////////////////////////////////////////////////////////////////////////////////
 // Extra stuff for building a shared object.
 
 /* need the extern to avoid C++ name-mangling  */
@@ -493,7 +486,6 @@ extern "C" {
     puts("CameraV4L2 driver initializing");
     CameraV4L2_Register(table);
     puts("CameraV2L2 driver done");
-    return(0);
+    return 0;
   }
 }
-
