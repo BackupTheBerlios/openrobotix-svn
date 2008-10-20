@@ -260,9 +260,6 @@ void CameraV4L2::Main()
 
     // Grab the next frame (blocking)
     rc = this->GrabFrame();
-
-    pthread_setcancelstate(oldstate, NULL);
-
     if (rc)
     {
       PLAYER_ERROR("No frame!");
@@ -271,6 +268,8 @@ void CameraV4L2::Main()
 
     // Interact with the device, and push out the resulting data.
     this->RefreshData();
+
+    pthread_setcancelstate(oldstate, NULL);
   }
 }
 

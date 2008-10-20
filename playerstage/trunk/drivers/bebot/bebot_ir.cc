@@ -216,6 +216,7 @@ int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
 // Main function for device thread
 void BeBotIR::Main() 
 {
+  int oldstate;
   struct timespec tspec;
 
   // The main loop; interact with the device here
@@ -235,6 +236,8 @@ void BeBotIR::Main()
 
     // Interact with the device, and push out the resulting data, using
     // Driver::Publish()
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+
     unsigned short buffer[this->total_sensor_count];
     unsigned short * p_buffer = buffer;
 
@@ -275,6 +278,7 @@ void BeBotIR::Main()
                   (void*) &ir_data,
                   sizeof(ir_data),
                   NULL);
+    pthread_setcancelstate(oldstate, NULL);
   }
 }
 

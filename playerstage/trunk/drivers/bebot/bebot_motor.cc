@@ -214,6 +214,7 @@ int BeBotMotor::setSpeeds(float v_translate, float v_rotate)
 // Main function for device thread
 void BeBotMotor::Main() 
 {
+  int oldstate;
   struct timespec tspec;
 
   // The main loop; interact with the device here
@@ -234,6 +235,8 @@ void BeBotMotor::Main()
     // Interact with the device, and push out the resulting data, using
     // Driver::Publish()
 #if 0
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+
     short buf[2];
 
     // read speed for left and right motor in mm/s
@@ -256,6 +259,8 @@ void BeBotMotor::Main()
                   (void*) &position2d_data,
                   sizeof(position2d_data),
                   NULL);
+
+    pthread_setcancelstate(oldstate, NULL);
 #endif
   }
 }
