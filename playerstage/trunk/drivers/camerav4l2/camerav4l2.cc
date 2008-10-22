@@ -64,6 +64,10 @@ The camerav4l2 driver captures images from V4L2-compatible cameras.
   - Default: -1 (do not set)
   - Sets the camera gain setting.
 
+- h_flip (integer)
+  - Default: 0 (do not set)
+  - Horizontal Flip.
+
 - sleep_nsec (integer)
   - Default: 10000000 (=10ms which gives max 100 fps)
   - timespec value for nanosleep()
@@ -151,6 +155,8 @@ class CameraV4L2 : public Driver
 
   private: int gain;
 
+  private: int h_flip;
+
   private: int sleep_nsec;
 
   // Capture timestamp
@@ -189,6 +195,8 @@ CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
 
   this->gain = cf->ReadInt(section, "gain", -1);
 
+  this->h_flip = cf->ReadInt(section, "h_flip", 0);
+
   this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 10000000);
 }
 
@@ -219,7 +227,10 @@ int CameraV4L2::Shutdown()
 
   // Free resources
   if (v4l2_close(this->fd) == -1)
+  {
+    PLAYER_ERROR("Couldn't close file handle");
     return -1;
+  }
 
   return 0;
 }
@@ -243,7 +254,6 @@ void CameraV4L2::Main()
   int rc;
 
   // The main loop; interact with the device here
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
   for (;;)
   {
     // Test if we are supposed to cancel this thread.
@@ -373,6 +383,12 @@ int CameraV4L2::InitDevice()
   if (this->gain != -1) {
     if (v4l2_set_control(this->fd,V4L2_CID_GAIN, this->gain) == -1)
       PLAYER_ERROR("Gain control not supported\n");
+  }
+
+  // Set Horizontal Flip
+  if(this->h_flip != 0){
+    if(v4l2_set_control(this->fd, V4L2_CID_HFLIP, this->h_flip) == -1)
+      PLAYER_ERROR(" Horizontal Flip is not supported\n");
   }
 
   // Set framerate
