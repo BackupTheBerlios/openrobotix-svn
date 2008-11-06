@@ -91,6 +91,9 @@ class BeBotMotor : public Driver
   private: const char* device_name;
   private: int device_file;
   private: int sleep_nsec;
+
+  // Bugfix : terminate called without an active exception
+  private: int thread_run;
 };
 
 // Initialization function.
@@ -123,6 +126,7 @@ BeBotMotor::BeBotMotor(ConfigFile* cf, int section)
 int BeBotMotor::Setup()
 {
   // Start the device thread; spawns a new thread and executes
+  this->thread_run = 1;
   StartThread();
 
   return 0;
@@ -132,7 +136,8 @@ int BeBotMotor::Setup()
 int BeBotMotor::Shutdown()
 {
   // Stop and join the driver thread
-  StopThread();
+  this->thread_run = 0;
+//  StopThread();
 
   return 0;
 }
@@ -214,11 +219,11 @@ int BeBotMotor::setSpeeds(float v_translate, float v_rotate)
 // Main function for device thread
 void BeBotMotor::Main() 
 {
-  int oldstate;
+//  int oldstate;
   struct timespec tspec;
 
   // The main loop; interact with the device here
-  for(;;)
+  while(this->thread_run)
   {
     // Test if we are supposed to cancel this thread.
     pthread_testcancel();
@@ -235,7 +240,7 @@ void BeBotMotor::Main()
     // Interact with the device, and push out the resulting data, using
     // Driver::Publish()
 #if 0
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+//    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
     short buf[2];
 
@@ -260,7 +265,7 @@ void BeBotMotor::Main()
                   sizeof(position2d_data),
                   NULL);
 
-    pthread_setcancelstate(oldstate, NULL);
+//    pthread_setcancelstate(oldstate, NULL);
 #endif
   }
 }

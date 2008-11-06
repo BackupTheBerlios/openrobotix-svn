@@ -162,6 +162,8 @@ class CameraV4L2 : public Driver
   // Capture timestamp
   private: double timestamp;
 
+  // Bugfix : terminate called without an active exception
+  private: int thread_run;
 };
 
 // Initialization function
@@ -214,6 +216,7 @@ int CameraV4L2::Setup()
     return -1;
 
   // Start the device thread; spawns a new thread and executes
+  this->thread_run = 1;
   this->StartThread();
 
   return 0;
@@ -223,7 +226,8 @@ int CameraV4L2::Setup()
 int CameraV4L2::Shutdown()
 {
   // Stop and join the driver thread
-  StopThread();
+  this->thread_run = 0;
+//  StopThread();
 
   // Free resources
   if (v4l2_close(this->fd) == -1)
@@ -249,12 +253,12 @@ int CameraV4L2::ProcessMessage(QueuePointer &resp_queue,
 // Main function for device thread
 void CameraV4L2::Main()
 {
-  int oldstate;
+//  int oldstate;
   struct timespec tspec;
   int rc;
 
   // The main loop; interact with the device here
-  for (;;)
+  while(this->thread_run)
   {
     // Test if we are supposed to cancel this thread.
     pthread_testcancel();
@@ -266,7 +270,7 @@ void CameraV4L2::Main()
 
     ProcessMessages();
 
-    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+//    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
     // Grab the next frame (blocking)
     rc = this->GrabFrame();
@@ -279,7 +283,7 @@ void CameraV4L2::Main()
     // Interact with the device, and push out the resulting data.
     this->RefreshData();
 
-    pthread_setcancelstate(oldstate, NULL);
+//    pthread_setcancelstate(oldstate, NULL);
   }
 }
 
