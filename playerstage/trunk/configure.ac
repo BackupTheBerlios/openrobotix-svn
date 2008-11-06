@@ -12,8 +12,8 @@ PKG_CHECK_MODULES(PLAYERCORE,
   [have_playercore=yes],
   [])
 
-PLAYERCORE_PLUGIN_DIR=`$PKG_CONFIG --variable=prefix "playercore"`/lib/playercore
-AC_SUBST(PLAYERCORE_PLUGIN_DIR)
+PLAYER_PLUGIN_DIR=`$PKG_CONFIG --variable=prefix "playercore"`/lib/player
+AC_SUBST(PLAYER_PLUGIN_DIR)
 
 PKG_CHECK_MODULES(LIBV4L2,
   [libv4l2],
