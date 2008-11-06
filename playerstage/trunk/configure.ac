@@ -1,9 +1,6 @@
 AC_INIT([openrobotix-playerstage], [0.1])
 AM_INIT_AUTOMAKE([-Wall])
 
-VERSION_INFO="-version-number 2:1:1"
-AC_SUBST(VERSION_INFO)
-
 # Checks for programs.
 AC_PROG_CXX
 AC_PROG_INSTALL
