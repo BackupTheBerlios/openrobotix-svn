@@ -47,8 +47,8 @@
 #define MOTOR_INCREMENT_TYPE		4
 #define MOTOR_INCREMENT_SIZE		(2 * MOTOR_INCREMENT_TYPE)
 
-#define MOTOR_REG_POSITION		0x50			/* 3 x double word, R */
-#define MOTOR_POSITION_TYPE		4
+#define MOTOR_REG_POSITION		0x50			/* 3 x word, R */
+#define MOTOR_POSITION_TYPE		2
 #define MOTOR_POSITION_SIZE		(3 * MOTOR_POSITION_TYPE)
 
 /* Speed in mm/s with 3.33 mm/s resolution */
@@ -61,8 +61,8 @@
 #define MOTOR_INCREMENT_FROM_REG(x)	((((s32)x * 314) / 100) * 30 / (127 * 14))
 
 /* Position in mm */
-#define MOTOR_POSITION_FROM_REG(x)	((((s32)x * 314) / 100) * 30 / (127 * 14))
-#define MOTOR_YAW_FROM_REG(x)		((((s32)x * 314) / 100) * 30 / (127 * 14))
+#define MOTOR_POSITION_FROM_REG(x)	((s16)x)
+#define MOTOR_YAW_FROM_REG(x)		((s16)x)
 
 #define MOTOR_SPEED_LEFT(x, yaw)	(x + ((yaw * 75) / (2 * 1000)))
 #define MOTOR_SPEED_RIGHT(x, yaw)	(x - ((yaw * 75) / (2 * 1000)))
@@ -79,7 +79,7 @@ struct motor_data {
 	u8 speed[2];
 	/* Register values, double word */
 	u32 increment[2];
-	u32 position[3];
+	u16 position[3];
 };
 
 static struct motor_data *motor_update_data(struct device *dev)
