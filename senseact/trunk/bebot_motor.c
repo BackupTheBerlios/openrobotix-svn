@@ -261,7 +261,7 @@ static ssize_t motor_position_read(struct kobject *kobj, struct bin_attribute *a
 				  char *buf, loff_t off, size_t count)
 {
 	struct i2c_client *client = kobj_to_i2c_client(kobj);
-	s32 *value = (s32 *) buf ;
+	s16 *value = (s16 *) buf ;
 	int i;
 
 	dev_dbg(&client->dev, "Starting motor position read (p=%p, off=%lli, c=%zi)\n",
