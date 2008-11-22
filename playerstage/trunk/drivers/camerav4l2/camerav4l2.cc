@@ -420,6 +420,7 @@ int CameraV4L2::GrabFrame()
 
   this->data->bpp = 24;
   this->data->format = PLAYER_CAMERA_FORMAT_RGB888;
+  this->data->fdiv = 1;
   this->data->compression = PLAYER_CAMERA_COMPRESS_RAW;
   this->data->image_count = this->width * this->height * 3;
   this->data->image = reinterpret_cast<uint8_t *>
