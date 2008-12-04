@@ -56,7 +56,7 @@ The camerav4l2 driver captures images from V4L2-compatible cameras.
   - Desired image size.   This may not be honoured if the driver does
     not support the requested size).
 
-- framerate (integer)
+- fps (integer)
   - Default: 0 (do not set)
   - Requested frame rate (frames/second).
 
