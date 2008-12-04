@@ -230,12 +230,12 @@ int CameraV4L2::Shutdown()
 //  StopThread();
 
   // Free resources
-  if (v4l2_close(this->fd) == -1)
+/*  if (v4l2_close(this->fd) == -1)
   {
     PLAYER_ERROR("Couldn't close file handle");
     return -1;
   }
-
+*/
   return 0;
 }
 
@@ -285,6 +285,10 @@ void CameraV4L2::Main()
 
 //    pthread_setcancelstate(oldstate, NULL);
   }
+
+  // Free resources
+  if (v4l2_close(this->fd) == -1)
+    PLAYER_ERROR("Couldn't close file handle");
 }
 
 // Initialization of the device
