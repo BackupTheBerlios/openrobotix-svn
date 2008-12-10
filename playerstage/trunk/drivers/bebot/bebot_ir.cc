@@ -270,6 +270,8 @@ void BeBotIR::Main()
         ranges[i] = 1.0 / voltages[i] + 4.0;
       if(ranges[i]<0)
         ranges[i] = 0;
+      if(ranges[i]>14.0)
+        ranges[i] = 14.0;
     }
 
     player_ir_data_t ir_data;
