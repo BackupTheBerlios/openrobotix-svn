@@ -266,7 +266,7 @@ void BeBotIR::Main()
     {
       //printf("volt:%x %d\n", buffer[i], buffer[i]);
       voltages[i] = buffer[i] * 0.001; // voltage in V
-      if(ranges[i]>0)
+      if(voltages[i]>0)
         ranges[i] = 1.0 / voltages[i] + 4.0;
       if(ranges[i]<0)
         ranges[i] = 0;
