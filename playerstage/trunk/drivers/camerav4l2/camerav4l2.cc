@@ -361,6 +361,20 @@ int CameraV4L2::InitDevice()
   memset(&fmt, 0, sizeof(fmt));
   unsigned int color = V4L2_PIX_FMT_RGB24;
 
+  // >> Bugfix for OV9655 driver
+  fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  fmt.fmt.pix.width       = this->width * 2;
+  fmt.fmt.pix.height      = this->height * 2;
+  fmt.fmt.pix.pixelformat = color;
+  fmt.fmt.pix.field       = V4L2_FIELD_ANY;
+
+  if (v4l2_ioctl(this->fd, VIDIOC_S_FMT, &fmt) == -1)
+  {
+    PLAYER_ERROR("Unsupported VIDIOC_S_FMT");
+    return -1;
+  }
+  // <<
+
   fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   fmt.fmt.pix.width       = this->width;
   fmt.fmt.pix.height      = this->height;
