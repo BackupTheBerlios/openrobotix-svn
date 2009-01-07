@@ -267,11 +267,11 @@ void BeBotIR::Main()
       //printf("volt:%x %d\n", buffer[i], buffer[i]);
       voltages[i] = buffer[i] * 0.001; // voltage in V
       if(voltages[i]>0)
-        ranges[i] = (1.0 / voltages[i] + 4.0)  * 0.001;
+        ranges[i] = (1.0 / voltages[i] + 4.0)  * 0.01;
       if(ranges[i]<0)
         ranges[i] = 0;
-      if(ranges[i]>0.014)
-        ranges[i] = 0.014;
+      if(ranges[i]>0.14)
+        ranges[i] = 0.14;
     }
 
     player_ir_data_t ir_data;
