@@ -239,7 +239,6 @@ void BeBotMotor::Main()
 
     // Interact with the device, and push out the resulting data, using
     // Driver::Publish()
-#if 0
 //    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
     short buf[2];
@@ -266,7 +265,6 @@ void BeBotMotor::Main()
                   NULL);
 
 //    pthread_setcancelstate(oldstate, NULL);
-#endif
   }
 }
 
