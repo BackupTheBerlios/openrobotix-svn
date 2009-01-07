@@ -89,6 +89,7 @@ class BeBotMotor : public Driver
   private: int setSpeeds(float v_translate, float v_rotate);
 
   private: const char* device_name;
+  private: player_pose2d_t position;
   private: int device_file;
   private: int sleep_nsec;
 
@@ -120,6 +121,11 @@ BeBotMotor::BeBotMotor(ConfigFile* cf, int section)
   this->device_name = cf->ReadString(section, "device", "/dev/motor0");
 
   this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 100000000);
+
+  this->position.px = cf->ReadTupleFloat(section, "position", 0, 0);
+  this->position.py = cf->ReadTupleFloat(section, "position", 1, 0);
+  this->position.pa = cf->ReadTupleFloat(section, "position", 2, 0);
+
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
@@ -250,9 +256,9 @@ void BeBotMotor::Main()
     double v_right = buf[1] / 1000.0; // m/s
 
     player_position2d_data_t position2d_data;
-    position2d_data.pos.px = 0; // TODO
-    position2d_data.pos.py = 0;
-    position2d_data.pos.pa = 0; // TODO
+    position2d_data.pos.px = this->position.px; // TODO
+    position2d_data.pos.py = this->position.py;
+    position2d_data.pos.pa = this->position.pa; // TODO
     position2d_data.vel.px = (v_left + v_right)/2.0; // m/s
     position2d_data.vel.py = 0; // robot is not able to move sideward
     position2d_data.vel.pa = (buf[0] - buf[1])/WIDTH; // rad/s
