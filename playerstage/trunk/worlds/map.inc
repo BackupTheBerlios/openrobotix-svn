@@ -1,0 +1,21 @@
+# map.inc - useful setup for a floorplan bitmap
+# Authors: Stefan Herbrechtsmeier
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+  gui_movemask 0
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+  obstacle_return 0
+)
+
