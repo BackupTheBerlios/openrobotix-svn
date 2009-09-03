@@ -1,0 +1,5 @@
+kernel//home/hbmeier/senseact/linux/drivers/senseact.ko
+kernel//home/hbmeier/senseact/linux/drivers/senseact-poll.ko
+kernel//home/hbmeier/senseact/linux/drivers/bebot-base.ko
+kernel//home/hbmeier/senseact/linux/drivers/bebot-ir.ko
+kernel//home/hbmeier/senseact/linux/drivers/test.ko

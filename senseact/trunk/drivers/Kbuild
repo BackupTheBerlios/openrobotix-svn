@@ -1,0 +1,7 @@
+obj-m += senseact.o
+obj-m += senseact-poll.o
+obj-m += bebot-base.o
+obj-m += bebot-ir.o
+obj-m += test.o
+
+EXTRA_CFLAGS := -I$(src)/../include

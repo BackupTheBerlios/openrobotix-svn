@@ -1,4 +1,3 @@
-obj-m += bebot_ir.o
-obj-m += bebot_motor.o
-obj-m += ds2782.o
-obj-m += lis3lv02dq.o
+header-y += include/
+
+obj-m += drivers/
