@@ -1,9 +1,8 @@
 /*
  *  bebot_ir.cc - Player driver for BeBot-Robot ir sensors
- *  Copyright (C) 2007 - 2008
+ *  Copyright (C) 2007 - 2009
  *    Heinz Nixdorf Institute - University of Paderborn
  *    Department of System and Circuit Technology
- *    Alwin Heerklotz
  *    Stefan Herbrechtsmeier <hbmeier@hni.uni-paderborn.de>
  *  based on exampledriver.cc by Brian Gerkey
  *
@@ -24,7 +23,7 @@
  */
 
 /*
- * This driver provides an ir interface for a BeBot-robot by using irsensor
+ * This driver provides an ir interface for a BeBot-robot by using senseact
  * device files.
  */
 
@@ -33,11 +32,11 @@
 /** @defgroup driver_bebot_ir bebot_ir
  * @brief BeBot ir array
 
-The bebot_ir driver controls the irs of the BeBot.
+The bebot_ir driver controls the ir sensors of the BeBot.
 
 @par Compile-time dependencies
 
-- none
+- senseact
 
 @par Provides
 
@@ -49,20 +48,31 @@ The bebot_ir driver controls the irs of the BeBot.
 
 @par Configuration file options
 
-- sleep_nsec (integer)
-  - Default: 10000000 (=10ms)
-  - timespec value for nanosleep()
+- devices (string)
+  - Default: /dev/senseact0
+  - senseact BeBot ir sensor devices
 
-@author Alwin Heerklotz Stefan Herbrechtsmeier
+- counts (integer)
+  - Default: 1
+  - Number of sensors per device
+
+- poses (string)
+  - Default: 0 0 0 0 0 0
+  - sensor positions
+
+@author Stefan Herbrechtsmeier
 
 */
 /** @} */
 
+#include <stdio.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 
 #include <libplayercore/playercore.h>
+#include <linux/senseact.h>
 
 // The class for the driver
 class BeBotIR : public Driver
@@ -83,17 +93,15 @@ class BeBotIR : public Driver
   // Main function for device thread.
   private: virtual void Main();
 
-  private: int device_count;
-  private: const char** device_names;
-  private: int* sensors_per_device;
-  private: int total_sensor_count;
-  private: player_pose3d_t* poses;
-  private: float range_maximum;
-  private: float range_slope;
-  private: int sleep_nsec;
+  private: int devices_count;
+  private: int *devices;
+  private: const char **devices_name;
+  private: int *sensors_count;
+  private: int sensors_sum;
+  private: player_pose3d_t *positions;
 
   // Bugfix : terminate called without an active exception
-  private: int thread_run;
+//  private: int thread_run;
 };
 
 // Initialization function.
@@ -122,59 +130,66 @@ BeBotIR::BeBotIR(ConfigFile* cf, int section)
   tuple_count = cf->GetTupleCount(section, "devices");
 
   if (tuple_count == 0)
-    this->device_count = 1;
+    this->devices_count = 1;
   else
-    this->device_count = tuple_count;
+    this->devices_count = tuple_count;
 
-  this->device_names = new const char*[this->device_count];
+  this->devices = new int[this->devices_count];
+  this->devices_name = new const char*[this->devices_count];
 
-  for(int i = 0 ; i < this->device_count ; i++) 
+  for (int i = 0 ; i < this->devices_count; i++) 
   {
-    this->device_names[i] =cf->ReadTupleString(section, "devices", i,
-                                               "/dev/irsensor0");
+    this->devices_name[i] =cf->ReadTupleString(section, "devices", i,
+                                                "/dev/senseact0");
   }
 
-  this->total_sensor_count = 0;
+  this->sensors_sum = 0;
 
-  this->sensors_per_device = new int[this->device_count];
-  for(int i = 0 ; i < this->device_count ; i++)
+  this->sensors_count = new int[this->devices_count];
+  for (int i = 0 ; i < this->devices_count; i++)
   {
-    this->sensors_per_device[i] = cf->ReadTupleInt(section, "sensorcount",
-                                                   i, 1);
-    total_sensor_count += this->sensors_per_device[i];
+    this->sensors_count[i] = cf->ReadTupleInt(section, "counts", i, 1);
+    sensors_sum += this->sensors_count[i];
   }
 
-  this->poses = new player_pose3d_t[this->total_sensor_count];
+  this->positions = new player_pose3d_t[this->sensors_sum];
 
-  for(int i = 0 ; i < this->total_sensor_count ; i++)
+  for (int i = 0 ; i < this->sensors_sum; i++)
   {
-    poses[i].px = cf->ReadTupleFloat(section, "sensorposes", i*6, 0);
-    poses[i].py = cf->ReadTupleFloat(section, "sensorposes", i*6+1, 0);
-    poses[i].pz = cf->ReadTupleFloat(section, "sensorposes", i*6+2, 0);
-    poses[i].proll = cf->ReadTupleFloat(section, "sensorposes", i*6+3, 0);
-    poses[i].ppitch = cf->ReadTupleFloat(section, "sensorposes", i*6+4, 0);
-    poses[i].pyaw = cf->ReadTupleFloat(section, "sensorposes", i*6+5, 0);
+    positions[i].px = cf->ReadTupleFloat(section, "positions", i*6, 0);
+    positions[i].py = cf->ReadTupleFloat(section, "positions", i*6+1, 0);
+    positions[i].pz = cf->ReadTupleFloat(section, "positions", i*6+2, 0);
+    positions[i].proll = cf->ReadTupleFloat(section, "positions", i*6+3, 0);
+    positions[i].ppitch = cf->ReadTupleFloat(section, "positions", i*6+4, 0);
+    positions[i].pyaw = cf->ReadTupleFloat(section, "positions", i*6+5, 0);
   }
-
-  this->range_maximum = cf->ReadFloat(section, "range_maximum", 1.0);
-  this->range_slope = cf->ReadFloat(section, "range_slope", 1.0);
-
-  this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 10000000);
 }
 
 // Destructor.  Destroy any created objects.
 BeBotIR::~BeBotIR()
 {
-  delete [] this->device_names;
-  delete [] this->sensors_per_device;
-  delete [] this->poses;
+  delete [] this->devices;
+  delete [] this->devices_name;
+  delete [] this->sensors_count;
+  delete [] this->positions;
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
 int BeBotIR::Setup()
 {
-  // Start the device thread; spawns a new thread and executes
-  this->thread_run = 1;
+  for (int i = 0; i < this->devices_count; i++)
+  {
+    this->devices[i] = open(this->devices_name[i], O_RDONLY | O_NONBLOCK);
+    if (this->devices[i] == -1)
+    {
+      PLAYER_ERROR1("Couldn't open senseact device %s", this->devices_name[i]);
+      for (int j = 0; j < i; j++)
+	close(this->devices[j]);
+      return -1;
+    }
+  }
+  
+//  this->thread_run = 1;
   this->StartThread();
 
   return 0;
@@ -183,9 +198,11 @@ int BeBotIR::Setup()
 // Shutdown the device (called by server thread).
 int BeBotIR::Shutdown()
 {
-  // Stop and join the driver thread
-  this->thread_run = 0;
-//  StopThread();
+//  this->thread_run = 0;
+  StopThread();
+
+  for (int i = 0; i < this->devices_count; i++)
+    close(this->devices[i]);
 
   return 0;
 }
@@ -205,8 +222,8 @@ int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
     /* Return the sensor poses. */
     player_ir_pose_t pose;
 
-    pose.poses_count = this->total_sensor_count;
-    pose.poses = this->poses;
+    pose.poses_count = this->sensors_sum;
+    pose.poses = this->positions;
 
     this->Publish(device_addr, resp_queue,
                   PLAYER_MSGTYPE_RESP_ACK,
@@ -221,72 +238,87 @@ int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
 // Main function for device thread
 void BeBotIR::Main() 
 {
-//  int oldstate;
-  struct timespec tspec;
+  int values[this->sensors_sum];
+  float voltages[this->sensors_sum];
+  float ranges[this->sensors_sum];
 
-  // The main loop; interact with the device here
-  while(this->thread_run)
+//  while(this->thread_run)
+  while(1)
   {
-    // Test if we are supposed to cancel this thread.
     pthread_testcancel();
 
-    // Go to sleep for a while.
-    tspec.tv_sec = 0;
-    tspec.tv_nsec = this->sleep_nsec;
-    nanosleep(&tspec, NULL);
-
-    // Process incoming messages.  BeBotIR::ProcessMessage() is
-    // called on each message.
     ProcessMessages();
 
-    // Interact with the device, and push out the resulting data, using
-    // Driver::Publish()
 //    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
-    unsigned short buffer[this->total_sensor_count];
-    unsigned short * p_buffer = buffer;
+    int publish = 0;
 
-    // read voltage values in mV
-    for( int i = 0; i < this->device_count ; i++)
+    fd_set rfds;
+    
+    FD_ZERO(&rfds);
+    for (int i = 0; i < this->devices_count; i++)
+      FD_SET(this->devices[i], &rfds);
+
+    int rv = select(this->devices_count, &rfds, NULL, NULL, NULL);
+
+    if (rv == -1) // error
+      break;
+    else if (rv) // data available
     {
-      int devicefile = open(this->device_names[i], O_RDONLY);
-      //printf("%d count: %d p_buffer: %p file: %s \n", devicefile,
-      //       this->sensors_per_device[i],
-      //       (void*)p_buffer, this->device_names[i]);
-      read(devicefile,(void*)p_buffer,
-        this->sensors_per_device[i] * sizeof(unsigned short));
-      close(devicefile);
-      p_buffer += this->sensors_per_device[i];
+      int offset = 0;
+      for (int i = 0; i < this->devices_count; i++)
+      {
+	if (FD_ISSET(this->devices[i], &rfds))
+	{
+	  struct senseact_action actions[this->sensors_count[i] + 1];
+	  int n = read(this->devices[i], (void*)actions,
+		   (this->sensors_count[i] + 1) * sizeof(struct senseact_action));
+
+	  for (int j = 0; j < n; j++)
+	  {
+	    if (actions[j].type == SENSEACT_TYPE_BRIGHTNESS)
+	    {
+	      if (actions[j].index < this->sensors_count[i])
+	        values[offset + actions[j].index] = actions[j].value;
+	    }
+	    else if (actions[j].type == SENSEACT_TYPE_SYNC &&
+		     actions[j].index == SENSEACT_SYNC_SENSOR)
+	    {
+	      for (int k = offset; k < (offset + this->sensors_count[i]); k++)
+	      {
+		voltages[k] = values[k] * 0.001; // voltage in V
+		if (voltages[k] > 0)
+		  ranges[k] = (1.0 / voltages[k] + 4.0)  * 0.01;
+		if (ranges[k] < 0)
+		  ranges[k] = 0;
+		if (ranges[k] > 0.14)
+		  ranges[k] = 0.14;
+	      }
+
+	      publish = 1;
+	    }
+	  }
+	  offset += this->sensors_count[i];
+	}
+      }
+
+      if (publish)
+      {
+	player_ir_data_t ir_data;
+	ir_data.voltages_count = this->sensors_sum;
+	ir_data.voltages = voltages;
+	ir_data.ranges_count = this->sensors_sum;
+	ir_data.ranges = ranges;
+
+	this->Publish(device_addr,
+		      PLAYER_MSGTYPE_DATA,
+		      PLAYER_IR_DATA_RANGES,
+		      (void*) &ir_data,
+		      sizeof(ir_data),
+		      NULL);
+      }
     }
-
-    float voltages[this->total_sensor_count];
-    float ranges[this->total_sensor_count];
-
-    for(int i = 0; i < this->total_sensor_count ; i++)
-    {
-      //printf("volt:%x %d\n", buffer[i], buffer[i]);
-      voltages[i] = buffer[i] * 0.001; // voltage in V
-      if(voltages[i]>0)
-        ranges[i] = (1.0 / voltages[i] + 4.0)  * 0.01;
-      if(ranges[i]<0)
-        ranges[i] = 0;
-      if(ranges[i]>0.14)
-        ranges[i] = 0.14;
-    }
-
-    player_ir_data_t ir_data;
-    ir_data.voltages_count = this->total_sensor_count;
-    ir_data.voltages = voltages;
-    ir_data.ranges_count = this->total_sensor_count;
-    ir_data.ranges = ranges;
-
-    this->Publish(device_addr,
-                  PLAYER_MSGTYPE_DATA,
-                  PLAYER_IR_DATA_RANGES,
-                  (void*) &ir_data,
-                  sizeof(ir_data),
-                  NULL);
-//    pthread_setcancelstate(oldstate, NULL);
+//  pthread_setcancelstate(oldstate, NULL);
   }
 }
 

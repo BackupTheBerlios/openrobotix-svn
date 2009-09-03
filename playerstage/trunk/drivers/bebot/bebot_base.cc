@@ -1,9 +1,8 @@
 /*
- *  bebot_motor.cc - Player driver for BeBot-Robot motor controller
- *  Copyright (C) 2007 - 2008
+ *  bebot_base.cc - Player driver for BeBot-Robot motor controller
+ *  Copyright (C) 2007 - 2009
  *    Heinz Nixdorf Institute - University of Paderborn
  *    Department of System and Circuit Technology
- *    Alwin Heerklotz
  *    Stefan Herbrechtsmeier <hbmeier@hni.uni-paderborn.de>
  *  based on exampledriver.cc by Brian Gerkey
  *
@@ -30,14 +29,14 @@
 
 /** @ingroup drivers */
 /** @{ */
-/** @defgroup driver_bebot_motor bebot_motor
- * @brief BeBot motor controller
+/** @defgroup driver_bebot_base bebot_base
+ * @brief BeBot base controller
 
-The bebot_motor driver controls the motors of the BeBot.
+The bebot_base controls the motors of the BeBot.
 
 @par Compile-time dependencies
 
-- none
+- senseact
 
 @par Provides
 
@@ -50,29 +49,34 @@ The bebot_motor driver controls the motors of the BeBot.
 
 @par Configuration file options
 
-- sleep_nsec (integer)
-  - Default: 100000000 (=100ms)
-  - timespec value for nanosleep()
+- device (string)
+  - Default: /dev/senseact0
+  - senseact BeBot base device
 
-@author Alwin Heerklotz Stefan Herbrechtsmeier
+- position
+  - Default: [0 0 0]
+  - Offset position
+
+@author Stefan Herbrechtsmeier
 
 */
 /** @} */
 
 #include <unistd.h>
 #include <string.h>
-#include  <fcntl.h>
+#include <fcntl.h>
 
 #include <libplayercore/playercore.h>
+#include <linux/senseact.h>
 
-#define WIDTH 0.09
-#define LENGTH 0.09
+#define WIDTH 90
+#define LENGTH 90
 
 // The class for the driver
-class BeBotMotor : public Driver
+class BeBotBase : public Driver
 {
   // Constructor
-  public: BeBotMotor(ConfigFile* cf, int section);
+  public: BeBotBase(ConfigFile* cf, int section);
 
   // Setup/shutdown routines.
   public: virtual int Setup();
@@ -90,37 +94,34 @@ class BeBotMotor : public Driver
 
   private: const char* device_name;
   private: player_pose2d_t position;
-  private: int device_file;
-  private: int sleep_nsec;
+  private: int device;
 
   // Bugfix : terminate called without an active exception
-  private: int thread_run;
+//  private: int thread_run;
 };
 
 // Initialization function.
-Driver* BeBotMotor_Init(ConfigFile* cf, int section)
+Driver* BeBotBase_Init(ConfigFile* cf, int section)
 {
   // Create and return a new instance of this driver
-  return((Driver*)(new BeBotMotor(cf, section)));
+  return((Driver*)(new BeBotBase(cf, section)));
 }
 
 // Driver registration function
-void BeBotMotor_Register(DriverTable* table)
+void BeBotBase_Register(DriverTable* table)
 {
-  table->AddDriver("bebotmotor", BeBotMotor_Init);
+  table->AddDriver("bebotbase", BeBotBase_Init);
 }
 
 // Constructor
-BeBotMotor::BeBotMotor(ConfigFile* cf, int section)
+BeBotBase::BeBotBase(ConfigFile* cf, int section)
     : Driver(cf,
              section,
              false,
              PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
              PLAYER_POSITION2D_CODE)
 {
-  this->device_name = cf->ReadString(section, "device", "/dev/motor0");
-
-  this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 100000000);
+  this->device_name = cf->ReadString(section, "device", "/dev/senseact0");
 
   this->position.px = cf->ReadTupleFloat(section, "position", 0, 0);
   this->position.py = cf->ReadTupleFloat(section, "position", 1, 0);
@@ -129,26 +130,33 @@ BeBotMotor::BeBotMotor(ConfigFile* cf, int section)
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
-int BeBotMotor::Setup()
+int BeBotBase::Setup()
 {
-  // Start the device thread; spawns a new thread and executes
-  this->thread_run = 1;
+  this->device = open(this->device_name, O_RDONLY);
+  if (this->device == -1)
+  {
+    PLAYER_ERROR1("Couldn't open senseact device %s", this->device);
+    return -1;
+  }
+
+//  this->thread_run = 1;
   StartThread();
 
   return 0;
 }
 
 // Shutdown the device
-int BeBotMotor::Shutdown()
+int BeBotBase::Shutdown()
 {
-  // Stop and join the driver thread
-  this->thread_run = 0;
-//  StopThread();
+//  this->thread_run = 0;
+  StopThread();
+
+  close(this->device);
 
   return 0;
 }
 
-int BeBotMotor::ProcessMessage(QueuePointer & resp_queue,
+int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
                                    player_msghdr * hdr,
                                    void * data)
 {
@@ -165,14 +173,31 @@ int BeBotMotor::ProcessMessage(QueuePointer & resp_queue,
     player_position2d_cmd_vel_t position_cmd;
     position_cmd = *(player_position2d_cmd_vel_t *) data;
 
-    //PLAYER_MSG2(2,"sending motor commands for px=%f, pa=%f",
-    //            position_cmd.vel.px,
-    //            position_cmd.vel.pa);
+    // m/s to mm/s
+    int translation = position_cmd.vel.px * 1000.0;
+    int rotation = position_cmd.vel.pa * 1000.0;
+    
+    struct senseact_action actions[2];
 
-    if (this->setSpeeds(position_cmd.vel.px, position_cmd.vel.pa))
+    // left
+    actions[0].type = SENSEACT_TYPE_SPEED;
+    actions[0].index = 0;
+    actions[0].value = translation - rotation * WIDTH / 2;
+    
+    // right
+    actions[1].type = SENSEACT_TYPE_SPEED;
+    actions[1].index = 1;
+    actions[1].value = translation + rotation * WIDTH / 2;
+    
+    int rc = write(this->device, (void*)actions,
+		   2 * sizeof(struct senseact_action));
+
+    if (rc != 2 * sizeof(struct senseact_action))
     {
-      PLAYER_ERROR("failed to write speeds to device");
+      PLAYER_ERROR1("failed to write speeds to device %s", this->device_name);
+      return -1;  
     }
+
     return 0;
   } else if(Message::MatchMessage(hdr,
                                   PLAYER_MSGTYPE_REQ,
@@ -190,8 +215,8 @@ int BeBotMotor::ProcessMessage(QueuePointer & resp_queue,
     geom.pose.ppitch = 0.0;
     geom.pose.pyaw = 0.0;
 
-    geom.size.sl = LENGTH;
-    geom.size.sw = WIDTH;
+    geom.size.sl = LENGTH / 1000;
+    geom.size.sw = WIDTH / 1000;
 
     this->Publish(device_addr, resp_queue,
                   PLAYER_MSGTYPE_RESP_ACK,
@@ -203,73 +228,71 @@ int BeBotMotor::ProcessMessage(QueuePointer & resp_queue,
   return -1;
 }
 
-int BeBotMotor::setSpeeds(float v_translate, float v_rotate)
-{
-  float v_left = v_translate - v_rotate * WIDTH / 2.0;  // m/s
-  float v_right = v_translate + v_rotate * WIDTH / 2.0; // m/s
-
-  signed short buf[2];
-  buf[0] = (short) ((float) v_left * 1000); // mm/s;
-  buf[1] = (short) ((float) v_right * 1000); // mm/s;
-
-  this->device_file = open(this->device_name, O_RDWR);
-  int result = write(this->device_file, (void*)&buf, 4);
-  close(this->device_file);
-
-  if(result != 4)
-    return -1;
-
-  return 0;
-}
-
 // Main function for device thread
-void BeBotMotor::Main() 
+void BeBotBase::Main() 
 {
 //  int oldstate;
-  struct timespec tspec;
+  float position[2] = {0, 0};
+  float angle = 0;
+  float speed[2] = {0, 0};
 
-  // The main loop; interact with the device here
-  while(this->thread_run)
+//  while(this->thread_run)
+  while(1)
   {
-    // Test if we are supposed to cancel this thread.
     pthread_testcancel();
 
-    // Go to sleep for a while.
-    tspec.tv_sec = 0;
-    tspec.tv_nsec = this->sleep_nsec;
-    nanosleep(&tspec, NULL);
-
-    // Process incoming messages.  HNIMotorDriver::ProcessMessage() is
-    // called on each message.
     ProcessMessages();
 
-    // Interact with the device, and push out the resulting data, using
-    // Driver::Publish()
 //    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 
-    short buf[2];
+    struct senseact_action actions[10];
 
-    // read speed for left and right motor in mm/s
-    read(this->device_file,(void*)&buf, 4);
+    int n = read(this->device, (void*)actions,
+		 10 * sizeof(struct senseact_action));
 
-    double v_left = buf[0] / 1000.0; // m/s
-    double v_right = buf[1] / 1000.0; // m/s
+    for (int i = 0; i < n; i++)
+    {
+      switch (actions[i].type)
+      {
+      case SENSEACT_TYPE_SPEED:
+	if (actions[i].index > 1 &&
+	    actions[i].index < 4)
+	 speed[actions[i].index - 2] = actions[i].value;
+	break;
 
-    player_position2d_data_t position2d_data;
-    position2d_data.pos.px = this->position.px; // TODO
-    position2d_data.pos.py = this->position.py;
-    position2d_data.pos.pa = this->position.pa; // TODO
-    position2d_data.vel.px = (v_left + v_right)/2.0; // m/s
-    position2d_data.vel.py = 0; // robot is not able to move sideward
-    position2d_data.vel.pa = (buf[0] - buf[1])/WIDTH; // rad/s
-    position2d_data.stall = 0; // TODO: information is missing at /dev/motor0
-    this->Publish(device_addr,
-                  PLAYER_MSGTYPE_DATA,
-                  PLAYER_POSITION2D_DATA_STATE,
-                  (void*) &position2d_data,
-                  sizeof(position2d_data),
-                  NULL);
+      case SENSEACT_TYPE_POSITION:
+	if (actions[i].index < 2)
+	 position[actions[i].index] = actions[i].value;
+	break;
 
+      case SENSEACT_TYPE_ANGLE:
+	if (actions[i].index < 1)
+	 angle = actions[i].value;
+	break;
+
+      case SENSEACT_TYPE_SYNC:
+	if (actions[i].index == SENSEACT_SYNC_SENSOR)
+        {
+	  player_position2d_data_t position2d_data;
+
+	  position2d_data.pos.px = this->position.px + position[0] / 1000.0; // m/s
+	  position2d_data.pos.py = this->position.py + position[1] / 1000.0; // m/s
+	  position2d_data.pos.pa = this->position.pa + angle / 1000.0; // m/s
+	  position2d_data.vel.px = (speed[0] + speed[1]) / 1000.0 / 2.0; // m/s
+	  position2d_data.vel.py = 0;
+	  position2d_data.vel.pa = (speed[0] - speed[1]) / 1000.0 / WIDTH / 1000.0 * 2; // rad/s
+	  position2d_data.stall = 0;
+
+	  this->Publish(device_addr,
+			PLAYER_MSGTYPE_DATA,
+			PLAYER_POSITION2D_DATA_STATE,
+			(void*) &position2d_data,
+			sizeof(position2d_data),
+			NULL);
+	}
+	break;
+      }
+    }
 //    pthread_setcancelstate(oldstate, NULL);
   }
 }
@@ -280,9 +303,9 @@ void BeBotMotor::Main()
 extern "C" {
   int player_driver_init(DriverTable* table)
   {
-    puts("BeBotMotor driver initializing");
-    BeBotMotor_Register(table);
-    puts("BeBotMotor driver done");
+    puts("BeBotBase driver initializing");
+    BeBotBase_Register(table);
+    puts("BeBotBase driver done");
     return 0;
   }
 }

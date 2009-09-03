@@ -27,7 +27,7 @@ PKG_CHECK_MODULES(LIBV4LCONVERT,
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h string.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h string.h unistd.h linux/senseact.h])
 
 # Checks for arguments
 AC_ARG_ENABLE(drivers,
