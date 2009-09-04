@@ -263,7 +263,7 @@ void BeBotIR::Main()
     for (int i = 0; i < this->devices_count; i++)
       FD_SET(this->devices[i], &rfds);
 
-    int rv = select(this->devices_ndfs + 1, &rfds, NULL, NULL, NULL);
+    int rv = select(this->devices_nfds + 1, &rfds, NULL, NULL, NULL);
 
     if (rv == -1) // error
       break;
