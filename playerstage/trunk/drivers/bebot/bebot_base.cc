@@ -199,6 +199,15 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
     }
 
     return 0;
+  else if (Message::MatchMessage(hdr,
+				 PLAYER_MSGTYPE_REQ,
+				 PLAYER_POSITION2D_REQ_MOTOR_POWER,
+				 device_addr))
+  {
+    this->Publish(device_addr, resp_queue,
+		  PLAYER_MSGTYPE_RESP_ACK,
+		  PLAYER_POSITION2D_REQ_MOTOR_POWER);
+    return 0;    
   } else if(Message::MatchMessage(hdr,
                                   PLAYER_MSGTYPE_REQ,
                                   PLAYER_POSITION2D_REQ_GET_GEOM,
