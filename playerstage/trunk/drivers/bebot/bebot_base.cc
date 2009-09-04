@@ -132,7 +132,7 @@ BeBotBase::BeBotBase(ConfigFile* cf, int section)
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
 int BeBotBase::Setup()
 {
-  this->device = open(this->device_name, O_RDONLY);
+  this->device = open(this->device_name, O_RDWR);
   if (this->device == -1)
   {
     PLAYER_ERROR1("Couldn't open senseact device %s", this->device);
@@ -194,7 +194,7 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
 
     if (rc != 2 * sizeof(struct senseact_action))
     {
-      PLAYER_ERROR2("failed to write speeds to device %s - %i", this->device_name, rc);
+      PLAYER_ERROR2("failed to write speeds to device %s - %i", this->device_name);
       return -1;  
     }
 
