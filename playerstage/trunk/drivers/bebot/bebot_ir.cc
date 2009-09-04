@@ -302,8 +302,8 @@ void BeBotIR::Main()
 	      publish = 1;
 	    }
 	  }
-	  offset += this->sensors_count[i];
 	}
+	offset += this->sensors_count[i];
       }
 
       if (publish)
