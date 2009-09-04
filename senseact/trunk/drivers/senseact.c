@@ -593,7 +593,6 @@ static unsigned int senseact_poll_file(struct file *file, poll_table *wait)
 {
 	struct senseact_queue *queue = file->private_data;
 	struct senseact_device *senseact = queue->senseact;
-printk("senseact_poll_file\n");
 
 	poll_wait(file, &senseact->wait, wait);
 	return ((queue->head == queue->tail) ? 0 : (POLLIN | POLLRDNORM)) |
