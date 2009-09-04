@@ -199,7 +199,7 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
     }
 
     return 0;
-  else if (Message::MatchMessage(hdr,
+  } else if (Message::MatchMessage(hdr,
 				 PLAYER_MSGTYPE_REQ,
 				 PLAYER_POSITION2D_REQ_MOTOR_POWER,
 				 device_addr))
