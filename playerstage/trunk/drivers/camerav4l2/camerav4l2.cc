@@ -163,7 +163,7 @@ class CameraV4L2 : public Driver
   private: double timestamp;
 
   // Bugfix : terminate called without an active exception
-  private: int thread_run;
+//  private: int thread_run;
 };
 
 // Initialization function
@@ -216,7 +216,7 @@ int CameraV4L2::Setup()
     return -1;
 
   // Start the device thread; spawns a new thread and executes
-  this->thread_run = 1;
+//  this->thread_run = 1;
   this->StartThread();
 
   return 0;
@@ -226,16 +226,16 @@ int CameraV4L2::Setup()
 int CameraV4L2::Shutdown()
 {
   // Stop and join the driver thread
-  this->thread_run = 0;
-//  StopThread();
+//  this->thread_run = 0;
+  StopThread();
 
   // Free resources
-/*  if (v4l2_close(this->fd) == -1)
+  if (v4l2_close(this->fd) == -1)
   {
     PLAYER_ERROR("Couldn't close file handle");
     return -1;
   }
-*/
+
   return 0;
 }
 
@@ -258,7 +258,8 @@ void CameraV4L2::Main()
   int rc;
 
   // The main loop; interact with the device here
-  while(this->thread_run)
+//  while(this->thread_run)
+  while(1)
   {
     // Test if we are supposed to cancel this thread.
     pthread_testcancel();
@@ -287,9 +288,9 @@ void CameraV4L2::Main()
   }
 
   // Free resources
-  if (v4l2_close(this->fd) == -1)
+/*  if (v4l2_close(this->fd) == -1)
     PLAYER_ERROR("Couldn't close file handle");
-}
+*/}
 
 // Initialization of the device
 int CameraV4L2::InitDevice()
