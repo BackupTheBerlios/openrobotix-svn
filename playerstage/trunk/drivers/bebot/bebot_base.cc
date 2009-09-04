@@ -194,7 +194,7 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
 
     if (rc != 2 * sizeof(struct senseact_action))
     {
-      PLAYER_ERROR1("failed to write speeds to device %s - %i", this->device_name, rc);
+      PLAYER_ERROR2("failed to write speeds to device %s - %i", this->device_name, rc);
       return -1;  
     }
 
