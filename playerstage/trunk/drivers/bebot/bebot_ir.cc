@@ -95,6 +95,7 @@ class BeBotIR : public Driver
 
   private: int devices_count;
   private: int *devices;
+  private: int devices_nfds;
   private: const char **devices_name;
   private: int *sensors_count;
   private: int sensors_sum;
@@ -177,6 +178,7 @@ BeBotIR::~BeBotIR()
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
 int BeBotIR::Setup()
 {
+  this->devices_nfds = 0;
   for (int i = 0; i < this->devices_count; i++)
   {
     this->devices[i] = open(this->devices_name[i], O_RDONLY | O_NONBLOCK);
@@ -187,6 +189,8 @@ int BeBotIR::Setup()
 	close(this->devices[j]);
       return -1;
     }
+    if (this->devices[i] > this->devices_nfds)
+      this->devices_nfds = this->devices[i];
   }
   
 //  this->thread_run = 1;
@@ -259,7 +263,9 @@ void BeBotIR::Main()
     for (int i = 0; i < this->devices_count; i++)
       FD_SET(this->devices[i], &rfds);
 
-    int rv = select(this->devices_count, &rfds, NULL, NULL, NULL);
+    int nfds
+
+    int rv = select(this->devices_ndfs + 1, &rfds, NULL, NULL, NULL);
 
     if (rv == -1) // error
       break;
