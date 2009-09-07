@@ -332,6 +332,7 @@ int CameraV4L2::InitDevice()
     return -1;
   }
 
+#if 0
   // Select video input, video standard and tune here
   memset(&cropcap, 0, sizeof(cropcap));
   cropcap.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -358,6 +359,7 @@ int CameraV4L2::InitDevice()
   {
     /* Errors ignored. */
   }
+#endif
 
   memset(&fmt, 0, sizeof(fmt));
   unsigned int color = V4L2_PIX_FMT_RGB24;
