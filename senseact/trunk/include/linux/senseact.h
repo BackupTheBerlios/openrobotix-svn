@@ -89,6 +89,7 @@ struct senseact_action {
 /**
  * struct senseact_dev - represents an input device
  * @name: name of the device
+ * @addr: physical address of the device
  * @private: private driver data
  * @types: bit mask for supported types
  * @open: this method is called when the very first user calls
@@ -120,6 +121,7 @@ struct senseact_action {
  */
 struct senseact_device {
 	const char *name;
+	const char *addr;
 
 	void *private;
 

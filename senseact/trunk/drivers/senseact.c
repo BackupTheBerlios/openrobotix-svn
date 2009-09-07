@@ -149,7 +149,7 @@ static void senseact_handle_actions(struct senseact_device *senseact,
 
 /**
  * class functions
- */ 
+ */
 #define SENSEACT_DEV_STRING_ATTR_SHOW(name)				\
 static ssize_t senseact_dev_show_##name(struct device *dev,		\
 					struct device_attribute *attr,	\
@@ -163,9 +163,11 @@ static ssize_t senseact_dev_show_##name(struct device *dev,		\
 static DEVICE_ATTR(name, S_IRUGO, senseact_dev_show_##name, NULL)
 
 SENSEACT_DEV_STRING_ATTR_SHOW(name);
+SENSEACT_DEV_STRING_ATTR_SHOW(addr);
 
 static struct attribute *senseact_dev_attrs[] = {
 	&dev_attr_name.attr,
+	&dev_attr_addr.attr,
 	NULL
 };
 

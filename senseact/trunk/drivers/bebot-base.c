@@ -61,6 +61,7 @@
 struct bebot_base_device {
 	struct senseact_poll_device *senseact_poll;
 	struct i2c_client *client;
+	char addr[32];
 	u8 speed[SETSPEED_COUNT];
 };
 
@@ -201,6 +202,8 @@ static int bebot_base_probe(struct i2c_client *client,
 	/* set senseact device handler */	
 	senseact = senseact_poll->senseact;
 	senseact->name = client->name;
+	snprintf(base->addr, sizeof(base->addr), "%01d-%04x", client->adapter->nr, client->addr);
+	senseact->addr = base->addr;
 	senseact->dev.parent = &client->dev;
 	senseact->pass = bebot_base_pass;
 

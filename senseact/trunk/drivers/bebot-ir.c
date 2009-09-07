@@ -26,6 +26,7 @@
 struct bebot_ir_device {
 	struct senseact_poll_device *senseact_poll;
 	struct i2c_client *client;
+	char addr[32];
 	u8 enable;
 };
 
@@ -140,6 +141,8 @@ static int bebot_ir_probe(struct i2c_client *client,
 	/* set senseact device handler */	
 	senseact = senseact_poll->senseact;
 	senseact->name = client->name;
+	snprintf(ir->addr, sizeof(ir->addr), "%01d-%04x", client->adapter->nr, client->addr);
+	senseact->addr = ir->addr;
 	senseact->dev.parent = &client->dev;
 	senseact->pass = bebot_ir_pass;
 
