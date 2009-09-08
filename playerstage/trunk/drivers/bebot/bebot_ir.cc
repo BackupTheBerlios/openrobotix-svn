@@ -282,7 +282,7 @@ void BeBotIR::Main()
 	  {
 	    if (actions[j].type == SENSEACT_TYPE_BRIGHTNESS)
 	    {
-	      if ((offset + actions[j].index) < this->sensors_count[i])
+	      if ((actions[j].index) < this->sensors_count[i])
 	        values[offset + actions[j].index] = actions[j].value;
 	    }
 	    else if (actions[j].type == SENSEACT_TYPE_SYNC &&
