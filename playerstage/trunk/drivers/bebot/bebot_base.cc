@@ -175,8 +175,8 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
     position_cmd = *(player_position2d_cmd_vel_t *) data;
 
     // m/s to mm/s
-    int translation = (int)rint(position_cmd.vel.px * 1000.0)); // m/s to mm/s
-    int rotation = (int)rint(position_cmd.vel.pa * * WIDTH / 2.0); // rad/s to mm/s
+    int translation = (int)rint(position_cmd.vel.px * 1000.0); // m/s to mm/s
+    int rotation = (int)rint(position_cmd.vel.pa * WIDTH / 2.0); // rad/s to mm/s
     
     struct senseact_action actions[2];
 
