@@ -65,12 +65,13 @@ The bebot_base controls the motors of the BeBot.
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
+#include <math.h>
 
 #include <libplayercore/playercore.h>
 #include <linux/senseact.h>
 
-#define WIDTH 90
-#define LENGTH 90
+#define WIDTH 90.0
+#define LENGTH 90.0
 
 // The class for the driver
 class BeBotBase : public Driver
@@ -174,20 +175,20 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
     position_cmd = *(player_position2d_cmd_vel_t *) data;
 
     // m/s to mm/s
-    int translation = position_cmd.vel.px * 1000.0;
-    int rotation = position_cmd.vel.pa * 1000.0;
+    int translation = (int)rint(position_cmd.vel.px * 1000.0)); // m/s to mm/s
+    int rotation = (int)rint(position_cmd.vel.pa * * WIDTH / 2.0); // rad/s to mm/s
     
     struct senseact_action actions[2];
 
     // left
     actions[0].type = SENSEACT_TYPE_SPEED;
     actions[0].index = 0;
-    actions[0].value = translation - rotation * WIDTH / 2;
+    actions[0].value = translation - rotation;
     
     // right
     actions[1].type = SENSEACT_TYPE_SPEED;
     actions[1].index = 1;
-    actions[1].value = translation + rotation * WIDTH / 2;
+    actions[1].value = translation + rotation;
     
     int rc = write(this->device, (void*)actions,
 		   2 * sizeof(struct senseact_action));
@@ -224,8 +225,8 @@ int BeBotBase::ProcessMessage(QueuePointer & resp_queue,
     geom.pose.ppitch = 0.0;
     geom.pose.pyaw = 0.0;
 
-    geom.size.sl = LENGTH / 1000;
-    geom.size.sw = WIDTH / 1000;
+    geom.size.sl = LENGTH / 1000.0;
+    geom.size.sw = WIDTH / 1000.0;
 
     this->Publish(device_addr, resp_queue,
                   PLAYER_MSGTYPE_RESP_ACK,
