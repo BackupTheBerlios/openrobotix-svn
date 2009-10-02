@@ -9,7 +9,7 @@ include "bebot.inc"
 include "map.inc"
 
 interval_sim 100  # simulation timestep in milliseconds
-interval_real 10  # real-time interval between simulation updates in milliseconds
+interval_real 250  # real-time interval between simulation updates in milliseconds
 resolution     0.005
 
 paused 0
