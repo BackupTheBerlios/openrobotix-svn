@@ -43,50 +43,63 @@ define bebot position
   # estimated mass in KG
   mass 1.0 
 
-  blocks 5
+  block
+  (
+    points 8
+    point[7] [ -0.0455  0.0390 ]
+    point[6] [ -0.0450  0.0440 ]
+    point[5] [  0.0450  0.0440 ]
+    point[4] [  0.0455  0.0390 ]
+    point[3] [  0.0455 -0.0390 ]
+    point[2] [  0.0450 -0.0440 ]
+    point[1] [ -0.0450 -0.0440 ]
+    point[0] [ -0.0455 -0.0390 ]
+    z [0.037 0.090]
+    color "gray50"
+  )
 
-  block[0].points 8
-  block[0].point[7] [ -0.0455  0.0390 ]
-  block[0].point[6] [ -0.0450  0.0440 ]
-  block[0].point[5] [  0.0450  0.0440 ]
-  block[0].point[4] [  0.0455  0.0390 ]
-  block[0].point[3] [  0.0455 -0.0390 ]
-  block[0].point[2] [  0.0450 -0.0440 ]
-  block[0].point[1] [ -0.0450 -0.0440 ]
-  block[0].point[0] [ -0.0455 -0.0390 ]
-  block[0].z [0.037 0.090]
-  block[0].color "gray50"
+  block
+  (
+    points 3
+    point[2] [  0.0255 -0.0000 ]
+    point[1] [  0.0455  0.0200 ]
+    point[0] [  0.0455 -0.0200 ]
+    z [0.09 0.091]
+    color "red"
+  )
 
-  block[1].points 3
-  block[1].point[2] [  0.0255 -0.0000 ]
-  block[1].point[1] [  0.0455  0.0200 ]
-  block[1].point[0] [  0.0455 -0.0200 ]
-  block[1].z [0.09 0.091]
-  block[1].color "red"
-  
-  block[2].points 4
-  block[2].point[3] [  0.0455  0.0290 ]
-  block[2].point[2] [  0.0455 -0.0290 ]
-  block[2].point[1] [ -0.0455 -0.0290 ]
-  block[2].point[0] [ -0.0455  0.0290 ]
-  block[2].z [0.007 0.037]
-  block[2].color "gray50"
-  
-  block[3].points 4
-  block[3].point[3] [  0.0455 -0.0300 ]
-  block[3].point[2] [  0.0455 -0.0440 ]
-  block[3].point[1] [ -0.0455 -0.0440 ]
-  block[3].point[0] [ -0.0455 -0.0300 ]
-  block[3].z [0.000 0.030]
-  block[3].color "gray75"
+  block
+  (
+    points 4
+    point[3] [  0.0455  0.0290 ]
+    point[2] [  0.0455 -0.0290 ]
+    point[1] [ -0.0455 -0.0290 ]
+    point[0] [ -0.0455  0.0290 ]
+    z [0.007 0.037]
+    color "gray50"
+  )
 
-  block[4].points 4
-  block[4].point[0] [  0.0455  0.0300 ]
-  block[4].point[1] [  0.0455  0.0440 ]
-  block[4].point[2] [ -0.0455  0.0440 ]
-  block[4].point[3] [ -0.0455  0.0300 ]
-  block[4].z [0.000 0.030]
-  block[4].color "gray75"
+  block
+  (
+    points 4
+    point[3] [  0.0455 -0.0300 ]
+    point[2] [  0.0455 -0.0440 ]
+    point[1] [ -0.0455 -0.0440 ]
+    point[0] [ -0.0455 -0.0300 ]
+    z [0.000 0.030]
+    color "gray75"
+  )
+
+  block
+  (
+    points 4
+    point[0] [  0.0455  0.0300 ]
+    point[1] [  0.0455  0.0440 ]
+    point[2] [ -0.0455  0.0440 ]
+    point[3] [ -0.0455  0.0300 ]
+    z [0.000 0.030]
+    color "gray75"
+  )
 
   # steering model (diff, omni, car)
   drive "diff"
