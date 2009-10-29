@@ -36,14 +36,9 @@
 #define INCREMENT_REG		0x40	/* 2 x word, R */
 #define INCREMENT_TYPE		2
 #define INCREMENT_COUNT		2
-#define INCREMENT_SIZE		(INCREMENT_COUNT * INCREMENT_TYPE)
-
-#define POSITION_REG		0x50			/* 2 x double word + 1 x word, R */
-#define POSITION_TYPE		4
-#define POSITION_COUNT		2
 #define ANGLE_TYPE		2
 #define ANGLE_COUNT		1
-#define POSITION_SIZE		(POSITION_COUNT * POSITION_TYPE + \
+#define INCREMENT_SIZE		(INCREMENT_COUNT * INCREMENT_TYPE + \
 				 ANGLE_COUNT * ANGLE_TYPE)
 
 /* Speed in mm/s with 3.33 mm/s resolution */
@@ -52,11 +47,14 @@
 				 (x < -400) ? -120 : \
 				 ((x * 3) / 10))
 
-/* Increment in mm */
+/* Increment */
 #define INCREMENT_FROM_REG(x)	(x)
 
+/* Angle in milli rad */
+#define ANGLE_FROM_REG(x)	((x * 1309) / 4800)
+
 /* Position in mm */
-#define POSITION_FROM_REG(x)	(x)
+#define POSITION_FROM_REG(x)	((x * 1683) / 32000)
 
 struct bebot_base_device {
 	struct senseact_poll_device *senseact_poll;
@@ -78,24 +76,6 @@ static int bebot_base_poll(struct senseact_poll_device *senseact_poll)
 	int values[3];
 	int n, i;
 
-	/* read position */
-	n = i2c_smbus_read_i2c_block_data(client, POSITION_REG,
-					  POSITION_SIZE, buffer);
-	if (n <= 0)
-		return n;
-
-	for (i = 0; i < POSITION_COUNT; i++) {
-		temp = buffer[(i * 4) + 3] << 8 | buffer[(i * 4) + 2] |
-		       buffer[(i * 4) + 1] << 8 | buffer[i * 4];	
-		values[i] = INCREMENT_FROM_REG(le32_to_cpu(temp));
-	}
-
-	temp = buffer[(POSITION_COUNT * 4) + 1] << 8 | buffer[POSITION_COUNT * 4];
-	values[i] = INCREMENT_FROM_REG(le32_to_cpu(temp));
-
-	senseact_pass_actions(senseact, SENSEACT_TYPE_POSITION, SENSEACT_PREFIX_MILLI, 0, POSITION_COUNT, values);
-	senseact_pass_action(senseact, SENSEACT_TYPE_ANGLE, SENSEACT_PREFIX_MILLI, 0, values[POSITION_COUNT]);
-
 	/* read increment */
 	n = i2c_smbus_read_i2c_block_data(client, INCREMENT_REG,
 					  INCREMENT_SIZE, buffer);
@@ -108,6 +88,18 @@ static int bebot_base_poll(struct senseact_poll_device *senseact_poll)
 	}
 
 	senseact_pass_actions(senseact, SENSEACT_TYPE_INCREMENT, SENSEACT_PREFIX_NONE, 0, INCREMENT_COUNT, values);
+
+	temp = buffer[(i * 2) + 1] << 8 | buffer[i * 2];
+	values[INCREMENT_COUNT] = ANGLE_FROM_REG(le32_to_cpu(temp));
+
+	senseact_pass_action(senseact, SENSEACT_TYPE_ANGLE, SENSEACT_PREFIX_MILLI, 0, values[INCREMENT_COUNT]);
+
+	for (i = 0; i < INCREMENT_COUNT; i++) {
+		temp = buffer[(i * 2) + 1] << 8 | buffer[i + 2];
+		values[i] = POSITION_FROM_REG(le32_to_cpu(temp));
+	}
+
+	senseact_pass_actions(senseact, SENSEACT_TYPE_POSITION, SENSEACT_PREFIX_MILLI, 0, INCREMENT_COUNT, values);
 
 	/* read speed */
 	n = i2c_smbus_read_i2c_block_data(client, GETSPEED_REG,
