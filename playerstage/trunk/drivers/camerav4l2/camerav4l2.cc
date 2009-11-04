@@ -68,6 +68,10 @@ The camerav4l2 driver captures images from V4L2-compatible cameras.
   - Default: 0 (do not set)
   - Horizontal Flip.
 
+- skip (integer)
+  - Default: 0 (do not set)
+  - Skip images between transfer 
+
 - sleep_nsec (integer)
   - Default: 10000000 (=10ms which gives max 100 fps)
   - timespec value for nanosleep()
@@ -157,6 +161,10 @@ class CameraV4L2 : public Driver
 
   private: int h_flip;
 
+  private: int index;
+
+  private: int skip;
+
   private: int sleep_nsec;
 
   // Capture timestamp
@@ -199,6 +207,8 @@ CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
 
   this->h_flip = cf->ReadInt(section, "h_flip", 0);
 
+  this->skip = cf->ReadInt(section, "skip", 0);
+
   this->sleep_nsec = cf->ReadInt(section, "sleep_nsec", 10000000);
 }
 
@@ -214,6 +224,8 @@ int CameraV4L2::Setup()
 
   if (this->InitDevice() == -1)
     return -1;
+
+  this->index = 0;
 
   // Start the device thread; spawns a new thread and executes
 //  this->thread_run = 1;
@@ -456,22 +468,30 @@ void CameraV4L2::RefreshData()
   {
     free(this->data->image);
     free(this->data);
+    this->data = NULL;
     PLAYER_ERROR("No image data to publish");
     return;
   }
 
   assert(this->data->image);
-  Publish(this->device_addr, 
-          PLAYER_MSGTYPE_DATA, PLAYER_CAMERA_DATA_STATE,
-          reinterpret_cast<void *>(this->data),
-          0, &this->timestamp, false);
+  if (this->index < this->skip)
+  {
+    this->index++;
+    free(this->data->image);
+    free(this->data);
+  } else {
+    this->index = 0;
+    Publish(this->device_addr, 
+            PLAYER_MSGTYPE_DATA, PLAYER_CAMERA_DATA_STATE,
+            reinterpret_cast<void *>(this->data),
+            0, &this->timestamp, false);
+    // We assume that Publish() freed this data!
+  }
 
-  // We assume that Publish() freed this data!
   this->data = NULL;
 
   return;
 }
-
 
 // Set Framerate
 int CameraV4L2::SetFramerate(int fps)
