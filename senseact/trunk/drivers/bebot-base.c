@@ -60,7 +60,7 @@ struct bebot_base_device {
 	struct senseact_poll_device *senseact_poll;
 	struct i2c_client *client;
 	char addr[32];
-	u8 speed[SETSPEED_COUNT];
+	s8 speed[SETSPEED_COUNT];
 };
 
 /*
@@ -71,45 +71,46 @@ static int bebot_base_poll(struct senseact_poll_device *senseact_poll)
 	struct senseact_device *senseact = senseact_poll->senseact;
 	struct bebot_base_device *base = senseact_get_drvdata(senseact);
 	struct i2c_client *client = base->client;
-	u8 buffer[12];
+	s16 increments[INCREMENT_COUNT + ANGLE_COUNT];
+	s8 speeds[GETSPEED_COUNT];
 	int temp;
-	int values[3];
+	int values[INCREMENT_COUNT + ANGLE_COUNT];
 	int n, i;
 
 	/* read increment */
 	n = i2c_smbus_read_i2c_block_data(client, INCREMENT_REG,
-					  INCREMENT_SIZE, buffer);
+					  INCREMENT_SIZE, (u8 *) increments);
 	if (n <= 0)
 		return n;
 
 	for (i = 0; i < INCREMENT_COUNT; i++) {
-		temp = buffer[(i * 2) + 1] << 8 | buffer[i * 2];
-		values[i] = INCREMENT_FROM_REG(le32_to_cpu(temp));
+		temp = (s16) le16_to_cpu(increments[i]);
+		values[i] = INCREMENT_FROM_REG(temp);
 	}
 
 	senseact_pass_actions(senseact, SENSEACT_TYPE_INCREMENT, SENSEACT_PREFIX_NONE, 0, INCREMENT_COUNT, values);
 
-	temp = buffer[(i * 2) + 1] << 8 | buffer[i * 2];
-	values[INCREMENT_COUNT] = ANGLE_FROM_REG(le32_to_cpu(temp));
+	temp = (s16) le16_to_cpu(increments[INCREMENT_COUNT]);
+	values[INCREMENT_COUNT] = ANGLE_FROM_REG(temp);
 
 	senseact_pass_action(senseact, SENSEACT_TYPE_ANGLE, SENSEACT_PREFIX_MILLI, 0, values[INCREMENT_COUNT]);
 
 	for (i = 0; i < INCREMENT_COUNT; i++) {
-		temp = buffer[(i * 2) + 1] << 8 | buffer[i + 2];
-		values[i] = POSITION_FROM_REG(le32_to_cpu(temp));
+		temp = (s16) le16_to_cpu(increments[i]);
+		values[i] = POSITION_FROM_REG(temp);
 	}
 
 	senseact_pass_actions(senseact, SENSEACT_TYPE_POSITION, SENSEACT_PREFIX_MILLI, 0, INCREMENT_COUNT, values);
 
 	/* read speed */
 	n = i2c_smbus_read_i2c_block_data(client, GETSPEED_REG,
-					  GETSPEED_SIZE, buffer);
+					  GETSPEED_SIZE, (u8 *) speeds);
 	if (n <= 0)
 		return n;
 
 	for (i = 0; i < GETSPEED_COUNT; i++) {
-		temp =  buffer[i];
-		values[i] = SPEED_FROM_REG(le32_to_cpu(temp));
+		temp =  speeds[i];
+		values[i] = SPEED_FROM_REG(temp);
 	}
 
 	senseact_pass_actions(senseact, SENSEACT_TYPE_SPEED, SENSEACT_PREFIX_MILLI, 2, GETSPEED_COUNT, values);
@@ -139,7 +140,7 @@ static int bebot_base_pass(struct senseact_device *senseact, unsigned int type, 
 				return rc;
 
 			for (n = 0; n < SETSPEED_COUNT; n++)
-				values[n] = SPEED_FROM_REG(base->speed[n]);
+				buffer[n] = SPEED_FROM_REG((int) base->speed[n]);
 
 			senseact_pass_actions(senseact, SENSEACT_TYPE_SPEED, SENSEACT_PREFIX_MILLI, 0, SETSPEED_COUNT, buffer);
 			senseact_sync(senseact, SENSEACT_SYNC_ACTOR);
