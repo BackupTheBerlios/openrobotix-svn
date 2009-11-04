@@ -191,7 +191,7 @@ CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
     : Driver(cf,
              section,
              true,
-             PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
+             1, // PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
              PLAYER_CAMERA_CODE), fd(-1), data(NULL)
 {
   // Camera defaults to /dev/video0
