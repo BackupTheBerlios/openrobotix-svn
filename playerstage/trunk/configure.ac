@@ -62,5 +62,14 @@ fi
 AC_MSG_RESULT($enable_camerav4l2)
 AM_CONDITIONAL(WITH_CAMERAV4L2, test "x$enable_camerav4l2" = "xyes")
 
-AC_CONFIG_FILES([Makefile config/Makefile drivers/Makefile drivers/bebot/Makefile drivers/camerav4l2/Makefile])
+AC_MSG_CHECKING(for enable drivers for the olsr deamon)
+AC_ARG_ENABLE(olsrd,
+  AC_HELP_STRING([--disable-olsrd], [Disable drivers for the olsr deamon]),
+  [enable_olsrd=$enableval],
+  [enable_olsrd=$enable_drivers])
+AC_MSG_RESULT($enable_olsrd)
+AM_CONDITIONAL(WITH_OLSRD, test "x$enable_olsrd" = "xyes")
+
+
+AC_CONFIG_FILES([Makefile config/Makefile drivers/Makefile drivers/bebot/Makefile drivers/camerav4l2/Makefile drivers/olsrd/Makefile])
 AC_OUTPUT
