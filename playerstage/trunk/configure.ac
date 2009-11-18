@@ -27,7 +27,11 @@ PKG_CHECK_MODULES(LIBV4LCONVERT,
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([fcntl.h string.h unistd.h linux/senseact.h])
+AC_CHECK_HEADERS([fcntl.h string.h unistd.h])
+
+AC_CHECK_HEADER(linux/senseact.h,
+  [have_senseact=yes],
+  [have_senseact=no])
 
 # Checks for arguments
 AC_ARG_ENABLE(drivers,
@@ -35,10 +39,14 @@ AC_ARG_ENABLE(drivers,
   [enable_drivers=$enableval], [enable_drivers=yes])
 
 AC_MSG_CHECKING(for enable drivers for the BeBot robot)
-AC_ARG_ENABLE(bebot,
-  AC_HELP_STRING([--disable-bebot], [Disable drivers for the BeBot robot]),
-  [enable_bebot=$enableval],
-  [enable_bebot=$enable_drivers])
+if test "x$have_senseact" = "xyes"; then
+  AC_ARG_ENABLE(bebot,
+    AC_HELP_STRING([--disable-bebot], [Disable drivers for the BeBot robot]),
+    [enable_bebot=$enableval],
+    [enable_bebot=$enable_drivers])
+else
+  enable_bebot=no
+fi
 AC_MSG_RESULT($enable_bebot)
 AM_CONDITIONAL(WITH_BEBOT, test "x$enable_bebot" = "xyes")
 
