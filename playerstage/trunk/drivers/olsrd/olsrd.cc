@@ -55,7 +55,7 @@ The olsr driver transports topology maps.
   - Object size
 
 - ip (string)
-  - Default: 192.168.0.1
+  - Default: 127.0.0.1
   - Host running olsrd
 
 - port (integer)
@@ -177,7 +177,7 @@ Olsrd::Olsrd(ConfigFile* cf, int section)
   this->geometry.size.sl = cf->ReadTupleFloat(section, "size", 0, 0.09);
   this->geometry.size.sw = cf->ReadTupleFloat(section, "size", 1, 0.09);
 
-  this->ip = cf->ReadString(section, "ip", "192.168.0.1");
+  this->ip = cf->ReadString(section, "ip", "127.0.0.1");
 
   this->port = cf->ReadInt(section, "port", 2006);
 
