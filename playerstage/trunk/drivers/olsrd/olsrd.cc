@@ -261,14 +261,16 @@ void Olsrd::Main()
                     PLAYER_MSGTYPE_DATA,
                     PLAYER_OPAQUE_DATA_STATE,
                     reinterpret_cast<void*>(&opaque));
-    }
+
 /*    PLAYER_ERROR2("--- %i * %i ---\n", count, sizeof(struct link));
     for (int i = 0; i < count; i++)
       PLAYER_ERROR3("%3i <-> %3i = %f\n", this->topology[i].start,
                     this->topology[i].end, this->topology[i].value);
 */
 
-    delete [] this->topology;
+      delete [] this->topology;
+      this->topology = NULL;
+    }
 
     this->Publish(this->position_addr,
                   PLAYER_MSGTYPE_DATA,
