@@ -287,7 +287,7 @@ int Olsrd::updateTopology()
 {
   struct sockaddr_in sockaddr;
   struct in_addr addr;
-  char buffer[1024], ipa[16], ipb[16];
+  char buffer[4 * 1024], ipa[16], ipb[16];
   char *str, *tmp;
   int fd, rc, n, size, count, i;
   float value;
