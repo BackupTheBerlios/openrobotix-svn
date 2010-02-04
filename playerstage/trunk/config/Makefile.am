@@ -8,9 +8,10 @@ endif
 
 if WITH_CAMERAV4L2
   CONFIGS += camerav4l2.cfg
-  if WITH_BEBOT
-    CONFIGS += bebot_cam.cfg
-  endif
+endif
+
+if WITH_CAMERAV4L2_BEBOT
+  CONFIGS += bebot_cam.cfg
 endif
 
 if WITH_OLSRD

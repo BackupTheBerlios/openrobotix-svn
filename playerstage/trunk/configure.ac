@@ -61,6 +61,7 @@ else
 fi
 AC_MSG_RESULT($enable_camerav4l2)
 AM_CONDITIONAL(WITH_CAMERAV4L2, test "x$enable_camerav4l2" = "xyes")
+AM_CONDITIONAL(WITH_CAMERAV4L2_BEBOT, test "x$enable_camerav4l2" = "xyes" -a x$enable_bebot" = "xyes)
 
 AC_MSG_CHECKING(for enable drivers for the olsr deamon)
 AC_ARG_ENABLE(olsrd,
