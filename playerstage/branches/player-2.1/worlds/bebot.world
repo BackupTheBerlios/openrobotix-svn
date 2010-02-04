@@ -1,0 +1,39 @@
+# Desc: One bebot with infrared
+# Authors: Stefan Herbrechtsmeier
+# Date: 14 July 2009
+
+# defines a bebot-like robot
+include "bebot.inc"
+
+# defines 'map' object used for floorplans
+include "map.inc"
+
+interval_sim 100  # simulation timestep in milliseconds
+interval_real 250  # real-time interval between simulation updates in milliseconds
+resolution     0.005
+
+paused 0
+
+# configure the GUI window
+window
+(
+  size [ 600.000 600.000 ] # in pixels
+  scale 300                # pixels per meter
+  show_data 1              # 1=on 0=off
+)
+
+# load an environment bitmap
+floorplan
+( 
+  name "cave"
+  size [ 2 2 0.3 ]
+  bitmap "bitmaps/cave.png"
+)
+
+bebot
+(		  
+  name "bebot"
+#  color "green"
+  pose [ -0.75 -0.75 0 45 ] 
+)
+
