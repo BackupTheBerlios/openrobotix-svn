@@ -108,20 +108,18 @@ driver
 #include <libv4l2.h>
 
 #include <libplayercore/playercore.h>
-#include <libplayercore/error.h>
 
 // Time for timestamps
 extern PlayerTime *GlobalTime;
 
 // The class for the CameraV4L2 driver
-class CameraV4L2 : public Driver
+class CameraV4L2 : public ThreadedDriver
 {
   // Constructor
   public: CameraV4L2(ConfigFile* cf, int section);
 
-  // Setup/shutdown routines.
-  public: virtual int Setup();
-  public: virtual int Shutdown();
+  public: virtual int MainSetup();
+  public: virtual void MainQuit();
 
   // This method will be invoked on each incoming message
   public: virtual int ProcessMessage(QueuePointer &resp_queue, 
@@ -188,7 +186,7 @@ void CameraV4L2_Register(DriverTable* table)
 
 // Constructor
 CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
-    : Driver(cf,
+    : ThreadedDriver(cf,
              section,
              true,
              1, // PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
@@ -213,7 +211,7 @@ CameraV4L2::CameraV4L2(ConfigFile* cf, int section)
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
-int CameraV4L2::Setup()
+int CameraV4L2::MainSetup()
 {
   this->fd = v4l2_open(this->device, O_RDWR, 0);
   if (this->fd == -1)
@@ -227,28 +225,13 @@ int CameraV4L2::Setup()
 
   this->index = 0;
 
-  // Start the device thread; spawns a new thread and executes
-//  this->thread_run = 1;
-  this->StartThread();
-
   return 0;
 }
 
 // Shutdown the device (called by server thread).
-int CameraV4L2::Shutdown()
+void CameraV4L2::MainQuit()
 {
-  // Stop and join the driver thread
-//  this->thread_run = 0;
-  StopThread();
-
-  // Free resources
-  if (v4l2_close(this->fd) == -1)
-  {
-    PLAYER_ERROR("Couldn't close file handle");
-    return -1;
-  }
-
-  return 0;
+  v4l2_close(this->fd);
 }
 
 // Process an incoming message

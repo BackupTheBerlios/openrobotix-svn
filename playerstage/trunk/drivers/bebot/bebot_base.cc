@@ -74,14 +74,13 @@ The bebot_base controls the motors of the BeBot.
 #define LENGTH 90.0
 
 // The class for the driver
-class BeBotBase : public Driver
+class BeBotBase : public ThreadedDriver
 {
   // Constructor
   public: BeBotBase(ConfigFile* cf, int section);
 
-  // Setup/shutdown routines.
-  public: virtual int Setup();
-  public: virtual int Shutdown();
+  public: virtual int MainSetup();
+  public: virtual void MainQuit();
 
   // This method will be invoked on each incoming message
   public: virtual int ProcessMessage(QueuePointer &resp_queue,
@@ -116,7 +115,7 @@ void BeBotBase_Register(DriverTable* table)
 
 // Constructor
 BeBotBase::BeBotBase(ConfigFile* cf, int section)
-    : Driver(cf,
+    : ThreadedDriver(cf,
              section,
              false,
              PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
@@ -131,7 +130,7 @@ BeBotBase::BeBotBase(ConfigFile* cf, int section)
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
-int BeBotBase::Setup()
+int BeBotBase::MainSetup()
 {
   this->device = open(this->device_name, O_RDWR);
   if (this->device == -1)
@@ -140,21 +139,12 @@ int BeBotBase::Setup()
     return -1;
   }
 
-//  this->thread_run = 1;
-  StartThread();
-
   return 0;
 }
 
-// Shutdown the device
-int BeBotBase::Shutdown()
+void BeBotBase::MainQuit()
 {
-//  this->thread_run = 0;
-  StopThread();
-
   close(this->device);
-
-  return 0;
 }
 
 int BeBotBase::ProcessMessage(QueuePointer & resp_queue,

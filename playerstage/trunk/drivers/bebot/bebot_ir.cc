@@ -75,15 +75,14 @@ The bebot_ir driver controls the ir sensors of the BeBot.
 #include <linux/senseact.h>
 
 // The class for the driver
-class BeBotIR : public Driver
+class BeBotIR : public ThreadedDriver
 {
   // Constructor
   public: BeBotIR(ConfigFile* cf, int section);
   public: ~BeBotIR();
 
-  // Setup/shutdown routines.
-  public: virtual int Setup();
-  public: virtual int Shutdown();
+  public: virtual int MainSetup();
+  public: virtual void MainQuit();
 
   // This method will be invoked on each incoming message
   public: virtual int ProcessMessage(QueuePointer &resp_queue,
@@ -120,7 +119,7 @@ void BeBotIR_Register(DriverTable* table)
 
 // Constructor
 BeBotIR::BeBotIR(ConfigFile* cf, int section)
-    : Driver(cf,
+    : ThreadedDriver(cf,
              section,
              false,
              PLAYER_MSGQUEUE_DEFAULT_MAXLEN,
@@ -176,7 +175,7 @@ BeBotIR::~BeBotIR()
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
-int BeBotIR::Setup()
+int BeBotIR::MainSetup()
 {
   this->devices_nfds = 0;
   for (int i = 0; i < this->devices_count; i++)
@@ -192,23 +191,15 @@ int BeBotIR::Setup()
     if (this->devices[i] > this->devices_nfds)
       this->devices_nfds = this->devices[i];
   }
-  
-//  this->thread_run = 1;
-  this->StartThread();
 
   return 0;
 }
 
 // Shutdown the device (called by server thread).
-int BeBotIR::Shutdown()
+void BeBotIR::MainQuit()
 {
-//  this->thread_run = 0;
-  StopThread();
-
   for (int i = 0; i < this->devices_count; i++)
     close(this->devices[i]);
-
-  return 0;
 }
 
 int BeBotIR::ProcessMessage(QueuePointer & resp_queue,

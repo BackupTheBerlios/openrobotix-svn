@@ -91,14 +91,13 @@ struct link
 };
 
 // The class for the driver
-class Olsrd : public Driver
+class Olsrd : public ThreadedDriver
 {
   // Constructor
   public: Olsrd(ConfigFile* cf, int section);
 
-  // Setup/shutdown routines.
-  public: virtual int Setup();
-  public: virtual int Shutdown();
+  public: virtual int MainSetup();
+  public: virtual void MainQuit();
 
   // This method will be invoked on each incoming message
   public: virtual int ProcessMessage(QueuePointer &resp_queue,
@@ -136,7 +135,7 @@ void Olsrd_Register(DriverTable* table)
 
 // Constructor
 Olsrd::Olsrd(ConfigFile* cf, int section)
-    : Driver(cf,
+    : ThreadedDriver(cf,
              section,
              false,
              PLAYER_MSGQUEUE_DEFAULT_MAXLEN)
@@ -185,7 +184,7 @@ Olsrd::Olsrd(ConfigFile* cf, int section)
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
-int Olsrd::Setup()
+int Olsrd::MainSetup()
 {
   int rc = inet_pton(AF_INET, ip, &this->address);
   if (rc <= 0)
@@ -194,17 +193,11 @@ int Olsrd::Setup()
     return -1;
   }
 
-  StartThread();
-
   return 0;
 }
 
-// Shutdown the device
-int Olsrd::Shutdown()
+void Olsrd::MainQuit()
 {
-  StopThread();
-
-  return 0;
 }
 
 int Olsrd::ProcessMessage(QueuePointer & resp_queue,
