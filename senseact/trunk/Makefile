@@ -29,6 +29,7 @@ headers_install:
 	- $(UNIFDEF) $(UNIFDEV_PARAMS) include/linux/senseact.h > include/linux/senseact.h.tmp
 	$(INSTALL) include/linux/senseact.h.tmp $(INSTALL_HDR_PATH)/include/linux/senseact.h
 	$(RM) include/linux/senseact.h.tmp
+	$(INSTALL) include/bebot.h $(INSTALL_HDR_PATH)/include/
 
 modules_clean:
 	@$(MAKE) ${KBUILD_PARAMS} clean
