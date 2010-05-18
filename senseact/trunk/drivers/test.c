@@ -12,6 +12,7 @@
  */
 
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/senseact-poll.h>
