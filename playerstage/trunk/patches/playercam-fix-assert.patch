@@ -1,0 +1,13 @@
+diff -Naur a/utils/playercam/playercam.c b/utils/playercam/playercam.c
+--- a/utils/playercam/playercam.c	2009-06-07 09:44:40.000000000 +0200
++++ b/utils/playercam/playercam.c	2010-04-21 15:50:08.000000000 +0200
+@@ -461,7 +461,8 @@
+     {
+       // Decompress the image if necessary
+       playerc_camera_decompress(g_camera);
+-      assert(allocated_size > g_camera->image_count*3);
++
++      assert(allocated_size >= g_camera->image_count);
+       // figure out the colorspace
+       switch (g_camera->format)
+       {
