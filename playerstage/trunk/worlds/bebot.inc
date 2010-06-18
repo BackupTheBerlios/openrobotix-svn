@@ -35,7 +35,7 @@ define bebot position
   size [0.091 0.088 0.09]
 
   # the center of rotation is offset from its center of area
-  origin [0.0 0.0 0]
+  origin [0.0 0.0 0 0]
 
   # draw a nose on the robot so we can see which way it points
   gui_nose 0
@@ -105,8 +105,8 @@ define bebot position
   drive "diff"
 
   localization "odom"
-  localization_origin [ 0 0 0 ]
-  odom_error [ 0.03 0.03 0.05 ]
+  localization_origin [ 0 0 0 0 ]
+  odom_error [ 0.03 0.03 0.05 0 ]
 
   # use the ir array defined above
   bebot_ir()
