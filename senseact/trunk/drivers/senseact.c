@@ -255,6 +255,7 @@ struct senseact_device *senseact_allocate_device(void)
 	senseact->dev.class = &senseact_class;
 	device_initialize(&senseact->dev);
 	mutex_init(&senseact->mutex);
+	spin_lock_init(&senseact->action_lock);
 	spin_lock_init(&senseact->queue_lock);
 	INIT_LIST_HEAD(&senseact->queue_list);
 	init_waitqueue_head(&senseact->wait);
