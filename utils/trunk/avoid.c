@@ -40,8 +40,8 @@ int avoid(struct bebot *bebot)
 		if (value < 150 || value > 1000)
 			value = 150;
 
-		x += scale[0][i] * bebot_get_brightness(bebot, i);
-		y += scale[1][i] * bebot_get_brightness(bebot, i);
+		x += scale[0][i] * value;
+		y += scale[1][i] * value;
 	}
 
 	if (x > 0)
