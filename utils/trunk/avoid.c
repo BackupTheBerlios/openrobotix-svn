@@ -38,7 +38,7 @@ int avoid(struct bebot *bebot)
 		value = bebot_get_brightness(bebot, i);
 
 		if (value < 150 || value > 1000)
-			value = 150;
+			value = 0;
 
 		x += scale[0][i] * value;
 		y += scale[1][i] * value;
