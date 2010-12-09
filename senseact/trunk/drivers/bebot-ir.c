@@ -19,17 +19,30 @@
 
 #define SENSOR_REG		0x20	/* word, R */
 #define SENSOR_TYPE		2	/* word */
-#define SENSOR_COUNT		6
+#define SENSOR_COUNT		12
 #define SENSOR_SIZE		(SENSOR_COUNT * SENSOR_TYPE)
 
 #define ENABLE_REG		0x2F	/* byte, RW */
+#define ENABLE_REG2		0x30	/* word, RW */
 
 struct bebot_ir_device {
 	struct senseact_poll_device *senseact_poll;
 	struct i2c_client *client;
 	char addr[32];
-	u8 enable;
+	u16 count;
+	u16 enable;
 };
+
+static int bebot_ir_write_enable(struct bebot_ir_device *ir)
+{
+	int rc;
+
+	if (ir->count == 6)
+		rc = i2c_smbus_write_byte_data(ir->client, ENABLE_REG, ir->enable);
+	else
+		rc = i2c_smbus_write_word_data(ir->client, ENABLE_REG2, ir->enable);
+	return rc;
+}
 
 /*
  * Timer function which is run every x ms when the device is opened.
@@ -45,7 +58,7 @@ static int bebot_ir_poll(struct senseact_poll_device *senseact_poll)
 	int n, i;
 
 	n = i2c_smbus_read_i2c_block_data(client, SENSOR_REG,
-					  SENSOR_SIZE, buffer);
+					  SENSOR_TYPE * ir->count, buffer);
 	if (n <= 0)
 		return n;
 
@@ -70,7 +83,7 @@ static int bebot_ir_pass(struct senseact_device *senseact, unsigned int type, un
 	for (i = 0; i < count; i++) {
 		switch (type) {
 		case SENSEACT_TYPE_ENABLE:
-			if (index + i < SENSOR_COUNT) {
+			if (index + i < ir->count) {
 				if (values[i])
 					ir->enable |= (1 << (index + i));
 				else
@@ -80,14 +93,14 @@ static int bebot_ir_pass(struct senseact_device *senseact, unsigned int type, un
 			break;
 
 		case SENSEACT_TYPE_SYNC:
-			rc = i2c_smbus_write_byte_data(client, ENABLE_REG, ir->enable);
+			rc = bebot_ir_write_enable(ir);
 			if (rc < 0)
 				return rc;
 
-			for (n = 0; n < SENSOR_COUNT; n++)
+			for (n = 0; n < ir->count; n++)
 				buffer[n] = (ir->enable & (1 << n)) ? 1 : 0;
 
-			senseact_pass_actions(senseact, SENSEACT_TYPE_ENABLE, SENSEACT_PREFIX_NONE, 0, SENSOR_COUNT, buffer);
+			senseact_pass_actions(senseact, SENSEACT_TYPE_ENABLE, SENSEACT_PREFIX_NONE, 0, ir->count, buffer);
 			senseact_sync(senseact, SENSEACT_SYNC_ACTOR);
 
 			break;
@@ -107,6 +120,7 @@ static int bebot_ir_probe(struct i2c_client *client,
 	int rc;
 
 	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA
+				     | I2C_FUNC_SMBUS_WORD_DATA
 				     | I2C_FUNC_SMBUS_I2C_BLOCK))
 		return -ENODEV;
 
@@ -120,8 +134,9 @@ static int bebot_ir_probe(struct i2c_client *client,
 	ir->client = client;
 
 	/* enable all LEDs */
+	ir->count = id->driver_data;
 	ir->enable = 0xff;
-	rc = i2c_smbus_write_byte_data(client, ENABLE_REG, ir->enable);
+	rc = bebot_ir_write_enable(ir);
 	if (rc < 0)
 		goto exit_kfree;
 
@@ -149,8 +164,8 @@ static int bebot_ir_probe(struct i2c_client *client,
 
 	senseact_set_drvdata(senseact, ir);
 
-	senseact_set_capabilities(senseact, SENSEACT_TYPE_BRIGHTNESS, 6);
-	senseact_set_capabilities(senseact, SENSEACT_TYPE_ENABLE, 6);
+	senseact_set_capabilities(senseact, SENSEACT_TYPE_BRIGHTNESS, ir->count);
+	senseact_set_capabilities(senseact, SENSEACT_TYPE_ENABLE, ir->count);
 
 	rc = senseact_register_poll_device(senseact_poll);
 	if (rc) {
@@ -186,7 +201,8 @@ static int bebot_ir_remove(struct i2c_client *client)
 }
 
 static const struct i2c_device_id bebot_ir_id[] = {
-	{ "bebot-ir", 0 },
+	{ "bebot-ir", 6 },
+	{ "bebot-ir2", 12 },
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, bebot_ir_id);
