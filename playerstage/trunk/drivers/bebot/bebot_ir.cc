@@ -56,6 +56,14 @@ The bebot_ir driver controls the ir sensors of the BeBot.
   - Default: 1
   - Number of sensors per device
 
+- adder (float)
+  - Default: 0.0
+  - Range calculation adder
+
+- multiplier (float)
+  - Default: 1.0
+  - Range calculation multiplier
+
 - poses (string)
   - Default: 0 0 0 0 0 0
   - sensor positions
@@ -98,6 +106,9 @@ class BeBotIR : public ThreadedDriver
   private: const char **devices_name;
   private: int *sensors_count;
   private: int sensors_sum;
+  private: int *adders;
+  private: int *multipliers;
+  private: int *limits;
   private: player_pose3d_t *positions;
 
   // Bugfix : terminate called without an active exception
@@ -126,6 +137,7 @@ BeBotIR::BeBotIR(ConfigFile* cf, int section)
              PLAYER_IR_CODE)
 {
   int tuple_count;
+  int sum;
 
   tuple_count = cf->GetTupleCount(section, "devices");
 
@@ -136,25 +148,40 @@ BeBotIR::BeBotIR(ConfigFile* cf, int section)
 
   this->devices = new int[this->devices_count];
   this->devices_name = new const char*[this->devices_count];
-
+  
   for (int i = 0 ; i < this->devices_count; i++) 
   {
     this->devices_name[i] =cf->ReadTupleString(section, "devices", i,
                                                 "/dev/senseact0");
   }
 
-  this->sensors_sum = 0;
+  sum = 0;
 
   this->sensors_count = new int[this->devices_count];
   for (int i = 0 ; i < this->devices_count; i++)
   {
     this->sensors_count[i] = cf->ReadTupleInt(section, "counts", i, 1);
-    sensors_sum += this->sensors_count[i];
+    sum += this->sensors_count[i];
   }
 
-  this->positions = new player_pose3d_t[this->sensors_sum];
+  this->adders = new float[this->devices_count];
 
-  for (int i = 0 ; i < this->sensors_sum; i++)
+  for (int i = 0 ; i < this->devices_count; i++)
+    this->adders[i] = cf->ReadTupleFloat(section, "adders", i, 0.0);
+
+  this->multipliers = new float[this->devices_count];
+
+  for (int i = 0 ; i < this->devices_count; i++)
+    this->multipliers[i] = cf->ReadTupleFloat(section, "multipliers", i, 1.0);
+
+  this->limits = new float[this->devices_count];
+
+  for (int i = 0 ; i < this->devices_count; i++)
+    this->limits[i] = cf->ReadTupleFloat(section, "limits", i, 1.0);
+
+  this->positions = new player_pose3d_t[sum];
+
+  for (int i = 0 ; i < sum; i++)
   {
     positions[i].px = cf->ReadTupleFloat(section, "positions", i*6, 0);
     positions[i].py = cf->ReadTupleFloat(section, "positions", i*6+1, 0);
@@ -172,24 +199,30 @@ BeBotIR::~BeBotIR()
   delete [] this->devices_name;
   delete [] this->sensors_count;
   delete [] this->positions;
+  delete [] this->adders;
+  delete [] this->multipliers;
+  delete [] this->limits;
 }
 
 // Set up the device.  Return 0 if things go well, and -1 otherwise.
 int BeBotIR::MainSetup()
 {
   this->devices_nfds = 0;
+  this->sensors_sum = 0;
+
   for (int i = 0; i < this->devices_count; i++)
   {
     this->devices[i] = open(this->devices_name[i], O_RDONLY | O_NONBLOCK);
     if (this->devices[i] == -1)
     {
       PLAYER_ERROR1("Couldn't open senseact device %s", this->devices_name[i]);
-      for (int j = 0; j < i; j++)
-	close(this->devices[j]);
-      return -1;
     }
-    if (this->devices[i] > this->devices_nfds)
-      this->devices_nfds = this->devices[i];
+    else
+    {
+      this->sensors_sum += this->sensors_count[i];
+      if (this->devices[i] > this->devices_nfds)
+        this->devices_nfds = this->devices[i];
+    }
   }
 
   return 0;
@@ -199,7 +232,8 @@ int BeBotIR::MainSetup()
 void BeBotIR::MainQuit()
 {
   for (int i = 0; i < this->devices_count; i++)
-    close(this->devices[i]);
+    if (this->devices[i] != -1)
+      close(this->devices[i]);
 }
 
 int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
@@ -218,7 +252,18 @@ int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
     player_ir_pose_t pose;
 
     pose.poses_count = this->sensors_sum;
-    pose.poses = this->positions;
+    pose.poses = new player_pose3d_t[this->sensors_sum];
+    
+    int n = 0;
+    int m = 0;
+    for (int i = 0; i < this->devices_count; i++)
+    {
+      if (this->devices[i] == -1)
+	m += this->sensors_count;
+      else
+        for (int j = 0; j < this->sensors_count[i]; j++)
+	  pose.poses[n++] = this->positions[m++];
+    }
 
     this->Publish(device_addr, resp_queue,
                   PLAYER_MSGTYPE_RESP_ACK,
@@ -252,7 +297,8 @@ void BeBotIR::Main()
     
     FD_ZERO(&rfds);
     for (int i = 0; i < this->devices_count; i++)
-      FD_SET(this->devices[i], &rfds);
+      if (this->devices[i] != -1)
+	FD_SET(this->devices[i], &rfds);
 
     int rv = select(this->devices_nfds + 1, &rfds, NULL, NULL, NULL);
 
@@ -263,7 +309,7 @@ void BeBotIR::Main()
       int offset = 0;
       for (int i = 0; i < this->devices_count; i++)
       {
-	if (FD_ISSET(this->devices[i], &rfds))
+	if (this->devices[i] != -1) && FD_ISSET(this->devices[i], &rfds))
 	{
 	  struct senseact_action actions[this->sensors_count[i] + 1];
 	  int n = read(this->devices[i], (void*)actions,
@@ -283,11 +329,11 @@ void BeBotIR::Main()
 	      {
 		voltages[k] = values[k] * 0.001; // voltage in V
 		if (voltages[k] > 0)
-		  ranges[k] = (1.0 / voltages[k] + 4.0)  * 0.01;
+		  ranges[k] = (1 / voltages[k] + this->adders[i]) * this->multipliers[i];
 		if (ranges[k] < 0)
 		  ranges[k] = 0;
-		if (ranges[k] > 0.14)
-		  ranges[k] = 0.14;
+		if (ranges[k] > this->limits[i])
+		  ranges[k] = this->limits[i];
 	      }
 
 	      publish = 1;
