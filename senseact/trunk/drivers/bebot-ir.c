@@ -23,7 +23,7 @@
 #define SENSOR_SIZE		(SENSOR_COUNT * SENSOR_TYPE)
 
 #define ENABLE_REG		0x2F	/* byte, RW */
-#define ENABLE_REG2		0x30	/* word, RW */
+#define ENABLE_REG2		0x3E	/* word, RW */
 
 struct bebot_ir_device {
 	struct senseact_poll_device *senseact_poll;

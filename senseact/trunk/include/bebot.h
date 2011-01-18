@@ -43,6 +43,7 @@
 #define BEBOT_INCREMENT_COUNT		2
 
 struct bebot {
+	int fds;
 	int fd[BEBOT_FD_COUNT];
 	int brightness[BEBOT_BRIGHTNESS_COUNT];
 	int speed[BEBOT_SPEED_COUNT];
@@ -53,18 +54,20 @@ struct bebot {
 
 static inline int bebot_init(struct bebot *bebot)
 {
-	char *name[BEBOT_FD_COUNT] = { "/dev/senseact/base", "/dev/senseact/ir0", "/dev/senseact/ir1" };;
+	char *name[] = { "/dev/senseact/base", "/dev/senseact/ir",
+			 "/dev/senseact/ir0", "/dev/senseact/ir1" };
 	int i, j;
 
-	bzero(bebot, sizeof(struct bebot));
+	memset(bebot, 0, sizeof(struct bebot));
 
-	for (i = 0; i < BEBOT_FD_COUNT; i++) {
-		bebot->fd[i] = open(name[i], O_RDWR | O_NONBLOCK);
-		if (bebot->fd[i] == -1) {
-			for (j = 0; j < i; j++)
+	for (i = 0; i < sizeof(name); i++) {
+		bebot->fd[bebot->fds] = open(name[i], O_RDWR | O_NONBLOCK);
+		if (bebot->fd[bebot->fds] == -1 && i > 1) {
+			for (j = 0; j < bebot->fds; j++)
 				close(bebot->fd[j]);
 			return -1;
 		}
+		bebot->fds++;
 	}
 
 	return 0;
@@ -74,7 +77,7 @@ static inline int bebot_release(struct bebot *bebot)
 {
 	int i;
 
-	for (i = 0; i < BEBOT_FD_COUNT; i++)
+	for (i = 0; i < bebot->fds; i++)
 		close(bebot->fd[i]);
 
 	return 0;
@@ -90,7 +93,7 @@ static inline int bebot_update(struct bebot *bebot)
 	struct senseact_action actions[BEBOT_ACTION_COUNT];
 	int i, j, n, offset, rc = 0;
 
-	for (i = 0; i < BEBOT_FD_COUNT; i++) {
+	for (i = 0; i < bebot->fds; i++) {
 		n = read(bebot->fd[i], (void*)actions,
 			 BEBOT_ACTION_COUNT * sizeof(struct senseact_action));
 
@@ -149,15 +152,15 @@ static inline int bebot_update(struct bebot *bebot)
 
 static inline int bebot_poll(struct bebot *bebot, int timeout)
 {
-	struct pollfd fds[BEBOT_FD_COUNT];
+	struct pollfd fds[bebot->fds];
 	int i;
 
-	for (i = 0; i < BEBOT_FD_COUNT; i++) {
+	for (i = 0; i < bebot->fds; i++) {
 		fds[i].fd = bebot->fd[i];
 		fds[i].events = POLLIN;
 	}
 
-	return poll(fds, BEBOT_FD_COUNT, timeout);
+	return poll(fds, bebot->fds, timeout);
 }
 
 static inline int bebot_set_speed(struct bebot *bebot, int left, int right)
