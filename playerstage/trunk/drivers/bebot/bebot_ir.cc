@@ -106,9 +106,9 @@ class BeBotIR : public ThreadedDriver
   private: const char **devices_name;
   private: int *sensors_count;
   private: int sensors_sum;
-  private: int *adders;
-  private: int *multipliers;
-  private: int *limits;
+  private: float *adders;
+  private: float *multipliers;
+  private: float *limits;
   private: player_pose3d_t *positions;
 
   // Bugfix : terminate called without an active exception
@@ -259,7 +259,7 @@ int BeBotIR::ProcessMessage(QueuePointer & resp_queue,
     for (int i = 0; i < this->devices_count; i++)
     {
       if (this->devices[i] == -1)
-	m += this->sensors_count;
+	m += this->sensors_count[i];
       else
         for (int j = 0; j < this->sensors_count[i]; j++)
 	  pose.poses[n++] = this->positions[m++];
@@ -309,7 +309,7 @@ void BeBotIR::Main()
       int offset = 0;
       for (int i = 0; i < this->devices_count; i++)
       {
-	if (this->devices[i] != -1) && FD_ISSET(this->devices[i], &rfds))
+	if ((this->devices[i] != -1) && FD_ISSET(this->devices[i], &rfds))
 	{
 	  struct senseact_action actions[this->sensors_count[i] + 1];
 	  int n = read(this->devices[i], (void*)actions,
