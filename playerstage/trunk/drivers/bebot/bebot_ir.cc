@@ -309,7 +309,7 @@ void BeBotIR::Main()
       int offset = 0;
       for (int i = 0; i < this->devices_count; i++)
       {
-	if ((this->devices[i] != -1)
+	if (this->devices[i] != -1)
 	{
 	  if (FD_ISSET(this->devices[i], &rfds))
 	  {
