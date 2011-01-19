@@ -309,38 +309,41 @@ void BeBotIR::Main()
       int offset = 0;
       for (int i = 0; i < this->devices_count; i++)
       {
-	if ((this->devices[i] != -1) && FD_ISSET(this->devices[i], &rfds))
+	if ((this->devices[i] != -1)
 	{
-	  struct senseact_action actions[this->sensors_count[i] + 1];
-	  int n = read(this->devices[i], (void*)actions,
-		   (this->sensors_count[i] + 1) * sizeof(struct senseact_action));
-
-	  for (int j = 0; j < n; j++)
+	  if (FD_ISSET(this->devices[i], &rfds))
 	  {
-	    if (actions[j].type == SENSEACT_TYPE_BRIGHTNESS)
-	    {
-	      if ((actions[j].index) < this->sensors_count[i])
-	        values[offset + actions[j].index] = actions[j].value;
-	    }
-	    else if (actions[j].type == SENSEACT_TYPE_SYNC &&
-		     actions[j].index == SENSEACT_SYNC_SENSOR)
-	    {
-	      for (int k = offset; k < (offset + this->sensors_count[i]); k++)
-	      {
-		voltages[k] = values[k] * 0.001; // voltage in V
-		if (voltages[k] > 0)
-		  ranges[k] = (1 / voltages[k] + this->adders[i]) * this->multipliers[i];
-		if (ranges[k] < 0)
-		  ranges[k] = 0;
-		if (ranges[k] > this->limits[i])
-		  ranges[k] = this->limits[i];
-	      }
+	    struct senseact_action actions[this->sensors_count[i] + 1];
+	    int n = read(this->devices[i], (void*)actions,
+		    (this->sensors_count[i] + 1) * sizeof(struct senseact_action));
 
-	      publish = 1;
+	    for (int j = 0; j < n; j++)
+	    {
+	      if (actions[j].type == SENSEACT_TYPE_BRIGHTNESS)
+	      {
+		if ((actions[j].index) < this->sensors_count[i])
+		  values[offset + actions[j].index] = actions[j].value;
+	      }
+	      else if (actions[j].type == SENSEACT_TYPE_SYNC &&
+		      actions[j].index == SENSEACT_SYNC_SENSOR)
+	      {
+		for (int k = offset; k < (offset + this->sensors_count[i]); k++)
+		{
+		  voltages[k] = values[k] * 0.001; // voltage in V
+		  if (voltages[k] > 0)
+		    ranges[k] = (1 / voltages[k] + this->adders[i]) * this->multipliers[i];
+		  if (ranges[k] < 0)
+		    ranges[k] = 0;
+		  if (ranges[k] > this->limits[i])
+		    ranges[k] = this->limits[i];
+		}
+
+		publish = 1;
+	      }
 	    }
 	  }
+	  offset += this->sensors_count[i];
 	}
-	offset += this->sensors_count[i];
       }
 
       if (publish)
