@@ -56,13 +56,17 @@ The bebot_ir driver controls the ir sensors of the BeBot.
   - Default: 1
   - Number of sensors per device
 
-- adder (float)
+- adders (float)
   - Default: 0.0
   - Range calculation adder
 
-- multiplier (float)
+- multipliers (float)
   - Default: 1.0
   - Range calculation multiplier
+
+- offsets (float)
+  - Default: 0.0
+  - Range calculation offset
 
 - poses (string)
   - Default: 0 0 0 0 0 0
@@ -108,6 +112,7 @@ class BeBotIR : public ThreadedDriver
   private: int sensors_sum;
   private: float *adders;
   private: float *multipliers;
+  private: float *offsets;
   private: float *limits;
   private: player_pose3d_t *positions;
 
@@ -174,6 +179,11 @@ BeBotIR::BeBotIR(ConfigFile* cf, int section)
   for (int i = 0 ; i < this->devices_count; i++)
     this->multipliers[i] = cf->ReadTupleFloat(section, "multipliers", i, 1.0);
 
+  this->offsets = new float[this->devices_count];
+
+  for (int i = 0 ; i < this->devices_count; i++)
+    this->offsets[i] = cf->ReadTupleFloat(section, "offsets", i, 0.0);
+
   this->limits = new float[this->devices_count];
 
   for (int i = 0 ; i < this->devices_count; i++)
@@ -201,6 +211,7 @@ BeBotIR::~BeBotIR()
   delete [] this->positions;
   delete [] this->adders;
   delete [] this->multipliers;
+  delete [] this->offsets;
   delete [] this->limits;
 }
 
@@ -331,7 +342,7 @@ void BeBotIR::Main()
 		{
 		  voltages[k] = values[k] * 0.001; // voltage in V
 		  if (voltages[k] > 0)
-		    ranges[k] = (1 / voltages[k] + this->adders[i]) * this->multipliers[i];
+		    ranges[k] = (this->multipliers[i] / (voltages[k] + this->adders[i])) + offsets[i];
 		  if (ranges[k] < 0)
 		    ranges[k] = 0;
 		  if (ranges[k] > this->limits[i])
