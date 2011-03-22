@@ -39,10 +39,10 @@ void led_init(void)
 {
 	FILE *file;
 
-	file = fopen("/sys/class/leds/bebot\:red\:error/trigger", "w");
+	file = fopen("/sys/class/leds/bebot:red:error/trigger", "w");
 
 	if (file == NULL)
-		file = fopen("/sys/class/leds/cerebric\:red\:status/trigger", "w");
+		file = fopen("/sys/class/leds/cerebric:red:status/trigger", "w");
 
 	if (file != NULL) {
 		fputs("none\n", file);
@@ -55,10 +55,10 @@ void led_set_brightness(int value)
 {
 	FILE *file;
 
-	file = fopen("/sys/class/leds/bebot\:red\:error/brightness", "w");
+	file = fopen("/sys/class/leds/bebot:red:error/brightness", "w");
 
 	if (file == NULL)
-		file = fopen("/sys/class/leds/cerebric\:red\:status/brightness", "w");
+		file = fopen("/sys/class/leds/cerebric:red:status/brightness", "w");
 
 	if (file != NULL) {
 		fprintf(file, "%d\n", value);
