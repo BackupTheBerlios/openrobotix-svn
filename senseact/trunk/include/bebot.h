@@ -52,6 +52,16 @@ struct bebot {
 	int increment[BEBOT_INCREMENT_COUNT];
 };
 
+static inline int bebot_release(struct bebot *bebot)
+{
+	int i;
+
+	for (i = 0; i < bebot->fds; i++)
+		close(bebot->fd[i]);
+
+	return 0;
+}
+
 static inline int bebot_init(struct bebot *bebot)
 {
 	char *name[] = { "/dev/senseact/base", "/dev/senseact/ir",
@@ -79,16 +89,6 @@ static inline int bebot_init(struct bebot *bebot)
 		bebot_release(bebot);
 		return -1;
 	}
-
-	return 0;
-}
-
-static inline int bebot_release(struct bebot *bebot)
-{
-	int i;
-
-	for (i = 0; i < bebot->fds; i++)
-		close(bebot->fd[i]);
 
 	return 0;
 }
