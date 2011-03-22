@@ -35,13 +35,35 @@
 
 /* 00:19:1D:DA:E2:03 */
 
-void set_led(int value)
+void led_init(void)
+{
+	FILE *file;
+
+	file = fopen("/sys/class/leds/bebot\:red\:error/trigger", "w");
+
+	if (file == NULL)
+		file = fopen("/sys/class/leds/cerebric\:red\:status/trigger", "w");
+
+	if (file != NULL) {
+		fputs("none\n", file);
+		fclose(file);
+	}
+}
+
+
+void led_set_brightness(int value)
 {
 	FILE *file;
 
 	file = fopen("/sys/class/leds/bebot\:red\:error/brightness", "w");
-	fprintf(file, "%d\n", value);
-	fclose(file);
+
+	if (file == NULL)
+		file = fopen("/sys/class/leds/cerebric\:red\:status/brightness", "w");
+
+	if (file != NULL) {
+		fprintf(file, "%d\n", value);
+		fclose(file);
+	}
 }
 
 int main(int argc, char **argv)
@@ -56,6 +78,8 @@ int main(int argc, char **argv)
 	int i;
 	struct timespec t;
 
+	led_init();
+
 	while (1) {
 		if (argc > 1) {
 			str2ba(argv[1], &bdaddr);
@@ -63,10 +87,10 @@ int main(int argc, char **argv)
 			bdaddr = *BDADDR_ANY;
 		}
 
-		set_led(1);
+		led_set_brightness(1);
 		printf("Put Wiimote in discoverable mode now (press 1+2)...\n");
 	        while(!(wiimote = cwiid_open(&bdaddr, 0)));
-		set_led(0);
+		led_set_brightness(0);
 
 		if (bebot_init(&bebot) < 0) {
 			printf("Unable to init bebot\n");
