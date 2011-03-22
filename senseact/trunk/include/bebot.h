@@ -56,18 +56,28 @@ static inline int bebot_init(struct bebot *bebot)
 {
 	char *name[] = { "/dev/senseact/base", "/dev/senseact/ir",
 			 "/dev/senseact/ir0", "/dev/senseact/ir1" };
-	int i, j;
+	int fds = 0, fd, i;
 
 	memset(bebot, 0, sizeof(struct bebot));
 
-	for (i = 0; i < sizeof(name); i++) {
-		bebot->fd[bebot->fds] = open(name[i], O_RDWR | O_NONBLOCK);
-		if (bebot->fd[bebot->fds] == -1 && i > 1) {
-			for (j = 0; j < bebot->fds; j++)
-				close(bebot->fd[j]);
-			return -1;
+	for (i = 0; i < sizeof(name) / sizeof(name*); i++) {
+		fd = open(name[i], O_RDWR | O_NONBLOCK);
+		if (fd != -1) {
+			if (bebot->fds < BEBOT_FD_COUNT) {
+				fds += 1 << i;
+				bebot->fd[bebot->fds] = fd;
+				bebot->fds++;
+			} else {
+				close(fd);
+				bebot_release(bebot);
+				return -1;
+			}
 		}
-		bebot->fds++;
+	}
+
+	if ((fds != 13) && (fds != 3)) {
+		bebot_release(bebot);
+		return -1;
 	}
 
 	return 0;
