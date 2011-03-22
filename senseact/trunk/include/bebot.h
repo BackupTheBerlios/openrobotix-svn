@@ -60,7 +60,7 @@ static inline int bebot_init(struct bebot *bebot)
 
 	memset(bebot, 0, sizeof(struct bebot));
 
-	for (i = 0; i < sizeof(name) / sizeof(name*); i++) {
+	for (i = 0; i < sizeof(name) / sizeof(*name); i++) {
 		fd = open(name[i], O_RDWR | O_NONBLOCK);
 		if (fd != -1) {
 			if (bebot->fds < BEBOT_FD_COUNT) {
