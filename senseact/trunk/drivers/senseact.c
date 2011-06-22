@@ -24,7 +24,6 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
-#include <linux/smp_lock.h>
 
 #include <linux/senseact.h>
 
