@@ -135,7 +135,7 @@ static int bebot_ir_probe(struct i2c_client *client,
 
 	/* enable all LEDs */
 	ir->count = id->driver_data;
-	ir->enable = 0xff;
+	ir->enable = 0xffff;
 	rc = bebot_ir_write_enable(ir);
 	if (rc < 0)
 		goto exit_kfree;
