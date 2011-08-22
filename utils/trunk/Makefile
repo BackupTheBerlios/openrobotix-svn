@@ -1,4 +1,4 @@
-DIRS = bebot fpga
+DIRS = bebot fpga player
 
 BUILDDIRS = $(DIRS:%=build-%)
 INSTALLDIRS = $(DIRS:%=install-%)
