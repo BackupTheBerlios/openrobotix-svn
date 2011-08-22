@@ -1,0 +1,7 @@
+CC=gcc
+INSTALL=install
+INSTALLDIR=
+BINDIR=/usr/bin
+LIBDIR=/lib
+LDFLAGS=
+CFLAGS=

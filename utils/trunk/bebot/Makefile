@@ -1,10 +1,4 @@
-CC=gcc
-INSTALL=install
-INSTALLDIR=
-PREFIX=/usr
-BINDIR=/bin
-LDFLAGS=
-CFLAGS=
+include ../Makefile.inc
 
 all: avoid wiibot
 
@@ -15,9 +9,9 @@ wiibot: wiibot.c
 	$(CC) $(CFLAGS) wiibot.c $(LDFLAGS) -lcwiid -o wiibot
 
 install: avoid wiibot
-	$(INSTALL) -d $(INSTALLDIR)$(PREFIX)$(BINDIR)
-	$(INSTALL) -m 755 avoid $(INSTALLDIR)$(PREFIX)$(BINDIR)/
-	$(INSTALL) -m 755 wiibot $(INSTALLDIR)$(PREFIX)$(BINDIR)/
+	$(INSTALL) -d $(INSTALLDIR)$(BINDIR)
+	$(INSTALL) -m 755 avoid $(INSTALLDIR)$(BINDIR)/
+	$(INSTALL) -m 755 wiibot $(INSTALLDIR)$(BINDIR)/
 
 clean:
 	@rm -f *.o avoid wiibot
