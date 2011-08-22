@@ -37,7 +37,7 @@ int avoid(struct bebot *bebot)
 	for (i = 0; i < BEBOT_BRIGHTNESS_COUNT; i++) {
 		value = bebot_get_brightness(bebot, i);
 
-		if (value < 150 || value > 1000)
+		if (value < 125 || value > 1000)
 			value = 0;
 
 		x += scale[0][i] * value;
@@ -70,6 +70,8 @@ int main(int argc, char *argv[])
 		if (bebot_update(&bebot) > 0) {
 			if (run) {
 				if (bebot_get_brightness(&bebot, 0) > 650 &&
+				    bebot_get_brightness(&bebot, 1) > 650 &&
+				    bebot_get_brightness(&bebot, 10) > 650 &&
 				    bebot_get_brightness(&bebot, 11) > 650) {
 					bebot_set_speed(&bebot, 0, 0);
 					run = 0;
