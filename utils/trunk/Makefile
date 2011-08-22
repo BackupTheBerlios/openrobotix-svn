@@ -7,16 +7,15 @@ CLEANDIRS = $(DIRS:%=clean-%)
 all: $(BUILDDIRS)
 $(DIRS): $(BUILDDIRS)
 $(BUILDDIRS):
-	$(MAKE) -C $(@:build-%=%)
+	$(MAKE) -e -C $(@:build-%=%) $(MAKEFLAGS)
 
 install: $(INSTALLDIRS)
 $(INSTALLDIRS):
-	$(MAKE) -C $(@:install-%=%) install
+	$(MAKE) -e -C $(@:install-%=%)  $(MAKEFLAGS) install
 
 clean: $(CLEANDIRS)
 $(CLEANDIRS): 
-	$(MAKE) -C $(@:clean-%=%) clean
-
+	$(MAKE) -e -C $(@:clean-%=%)  $(MAKEFLAGS) clean
 
 .PHONY: subdirs $(DIRS)
 .PHONY: subdirs $(BUILDDIRS)
