@@ -73,11 +73,11 @@ port (
 --	FPGA_BUSY 		: out	std_logic;
 --	FPGA_CSI_N 		: in	std_logic;
 
-	FPGA_IO			: inout	std_logic_vector(15 downto 0);
+--	FPGA_IO			: inout	std_logic_vector(15 downto 0);
 	FPGA_LED_RED_N 		: out	std_logic;
 	FPGA_LED_GREEN_N 	: out	std_logic;
 --	FPGA_IRQ_N 		: out	std_logic;
-	FPGA_RESET_N 		: in	std_logic
+	FPGA_RESET_N 		: in	std_logic;
 
 	-- MSL
 --	MSL_OB			: in	std_logic_vector(3 downto 0);
@@ -90,7 +90,7 @@ port (
 --	MSL_IB_WAIT		: in	std_logic;
 
 	-- SYS
---	SYS_IO			: inout	std_logic_vector(31 downto 0);
+	SYS_IO			: inout	std_logic_vector(31 downto 0)
 --	SYS_STATUS		: in	std_logic;
 --	SYS_ERROR		: in	std_logic
 
@@ -159,10 +159,10 @@ architecture BEH of FPGA_TOP is
 	signal current_addr		: std_logic_vector(3 downto 2);
 
 	-- IO
-	signal current_io_reg	: std_logic_vector(15 downto 0);
-	signal current_io_i		: std_logic_vector(15 downto 0);
-	signal current_io_o		: std_logic_vector(15 downto 0);
-	signal current_io_t		: std_logic_vector(15 downto 0);
+	signal current_io_reg	: std_logic_vector(31 downto 0);
+	signal current_io_i		: std_logic_vector(31 downto 0);
+	signal current_io_o		: std_logic_vector(31 downto 0);
+	signal current_io_t		: std_logic_vector(31 downto 0);
 	signal current_io_cs_n	: std_logic;
 	signal next_io_cs_n		: std_logic;
 
@@ -220,9 +220,9 @@ begin
 		LOC_WRITE_N => loc_write_n
 	);
 
-	io_loop: for i in 0 to 15 generate
+	io_loop: for i in 0 to 31 generate
 	begin
-		FPGA_IO(i) <= current_io_o(i) when (current_io_t(i) = '1') else 'Z';
+		SYS_IO(i) <= current_io_o(i) when (current_io_t(i) = '1') else 'Z';
 	end generate io_loop;
 	
 	-- Chip Select Mux
@@ -246,11 +246,11 @@ begin
 		if (current_io_cs_n = '0') then
 			case current_addr is
 				when "00" =>	-- in
-					loc_data_i(15 downto 0) <= current_io_i;
+					loc_data_i <= current_io_i;
 				when "01" =>	-- out
-					loc_data_i(15 downto 0) <= current_io_o;
+					loc_data_i <= current_io_o;
 				when "10" =>	-- gpio output
-					loc_data_i(15 downto 0) <= current_io_t;
+					loc_data_i <= current_io_t;
 				when others =>
 			end case;
 		elsif (current_buffer_cs_n = '0') then
@@ -279,16 +279,16 @@ begin
 				if (current_io_cs_n = '0') then
 					case loc_addr(3 downto 2) is
 						when "01" =>	-- out
-							current_io_o <= loc_data_o(15 downto 0);
+							current_io_o <= loc_data_o;
 						when "10" =>	-- gpio output
-							current_io_t <= loc_data_o(15 downto 0);
+							current_io_t <= loc_data_o;
 						when others =>
 					end case;
 				elsif (current_buffer_cs_n = '0') then
 					current_buffer <= loc_data_o;
 				end if;
 			end if;
-			current_io_reg <= FPGA_IO;
+			current_io_reg <= SYS_IO;
 			current_io_i <= current_io_reg;
 			current_led <= current_led + 1;
 			current_io_cs_n <= next_io_cs_n;

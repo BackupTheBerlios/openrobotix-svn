@@ -41,7 +41,7 @@ ARCHITECTURE behavior OF FPGA_TB IS
 		PWE_N			: in	std_logic;
 --		RDWR_N			: in	std_logic;
 		FPGA_CS_N		: in	std_logic;
-		FPGA_IO			: inout	std_logic_vector(15 downto 0);
+		SYS_IO			: inout	std_logic_vector(31 downto 0);
 		FPGA_LED_RED_N 		: out	std_logic;
 		FPGA_LED_GREEN_N 	: out	std_logic
 	);
@@ -83,7 +83,7 @@ ARCHITECTURE behavior OF FPGA_TB IS
 	SIGNAL mem_oe_n 		:  std_logic;
 	SIGNAL mem_rdwr_n		:  std_logic;
 
-	SIGNAL fpga_io : std_logic_vector(15 downto 0);
+	SIGNAL sys_io : std_logic_vector(31 downto 0);
 	SIGNAL led_green, led_red 	:  std_logic;
 
 BEGIN
@@ -100,7 +100,7 @@ BEGIN
 		PWE_N	=> mem_we_n,
 --		RDWR_N => mem_rdwr_n,
 		FPGA_CS_N => mem_cs_n,
-		FPGA_IO => fpga_io,
+		SYS_IO => sys_io,
 		FPGA_LED_RED_N => led_red,
 		FPGA_LED_GREEN_N => led_green
 	);
@@ -261,7 +261,7 @@ BEGIN
 		burst_read(X"0000010", 1);
 		-- IO
 		burst_read(X"0000000", 1);
-		burst_write(X"0000004", X"0000AAAA", 1);
+		burst_write(X"0000004", X"AAAAAAAA", 1);
 		burst_write(X"0000008", X"0000FFFF", 1);
 		burst_read(X"0000000", 1);
 
