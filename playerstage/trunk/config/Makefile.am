@@ -12,6 +12,7 @@ endif
 
 if WITH_CAMERAV4L2_BEBOT
   CONFIGS += bebot_cam.cfg
+  CONFIGS += colors.txt
 endif
 
 if WITH_OLSRD
